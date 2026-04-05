@@ -45,23 +45,32 @@ function isCSVFormat(content: string): boolean {
   return firstLine.includes('Agent Name') && firstLine.includes(',') && !firstLine.includes('|');
 }
 
-/** Detect if content contains a markdown table with agent-like columns */
+/** Detect if content contains a markdown table with agent-like header columns */
 function hasAgentTable(content: string): boolean {
-  return /\|\s*(Agent|Name)\s*\|/i.test(content) && /\|\s*(Role|Model)\s*\|/i.test(content);
+  // Find table header rows (lines before |---|---| separator)
+  const lines = content.split('\n');
+  for (let i = 0; i < lines.length - 1; i++) {
+    const line = lines[i].trim();
+    const nextLine = (lines[i + 1] ?? '').trim();
+    // Header row must be pipe-delimited and followed by separator
+    if (line.startsWith('|') && nextLine.match(/^\|[\s\-:|]+\|/)) {
+      // Split into column headers and check if they look like an agent map
+      const headers = line.split('|').map(h => h.trim().toLowerCase()).filter(h => h);
+      const hasAgent = headers.some(h => h === 'agent' || h === 'agent name' || h === 'name');
+      const hasRole = headers.some(h => h === 'role' || h === 'model' || h === 'status' || h === 'script');
+      if (hasAgent && hasRole) return true;
+    }
+  }
+  return false;
 }
 
 /** Check if file content looks like a dedicated agent map file */
 export function isAgentMap(content: string, filename?: string): boolean {
-  // If the file is clearly a README or other doc, skip even if it has agent tables
   const lowerName = (filename ?? '').toLowerCase();
   if (lowerName === 'readme.md' || lowerName.startsWith('changelog') || lowerName.startsWith('contributing')) {
     return false;
   }
-  // CSV format is a strong signal (AGENT_MAP.md is typically CSV)
-  if (isCSVFormat(content)) return true;
-  // Markdown table needs stronger signals: must have Model/Status columns too (not just Agent/Role)
-  if (hasAgentTable(content) && /\|\s*(Model|Status|Script)\s*\|/i.test(content)) return true;
-  return false;
+  return isCSVFormat(content) || hasAgentTable(content);
 }
 
 /** Parse agent map from CSV or markdown table format */

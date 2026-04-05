@@ -14,7 +14,7 @@ export function ProjectOverview() {
   const pipelineCount = project.pipeline.length;
 
   return (
-    <div className="absolute top-4 left-4 z-10 glass rounded-xl px-5 py-4 shadow-lg shadow-black/20 max-w-[280px]">
+    <div className="absolute top-4 left-4 z-10 glass rounded-xl px-5 py-4 shadow-lg shadow-black/20 max-w-[280px] max-h-[280px] overflow-y-auto">
       {/* Project name */}
       <h2 className="text-sm font-bold text-[#E0E0F0] mb-1">
         {project.metadata.name}
@@ -29,7 +29,7 @@ export function ProjectOverview() {
 
       {/* Stats */}
       <div className="flex gap-4 mb-3">
-        <Stat value={activeCount} label="Agents" />
+        <Stat value={activeCount} label="Agents" accent />
         <Stat value={pipelineCount} label="Phases" />
         <Stat value={project.edges.length} label="Edges" />
         <Stat value={project.rawFiles.length} label="Files" />
@@ -64,10 +64,10 @@ export function ProjectOverview() {
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
+function Stat({ value, label, accent }: { value: number; label: string; accent?: boolean }) {
   return (
     <div className="text-center">
-      <div className="text-sm font-bold text-[#F5A623]">{value}</div>
+      <div className={`text-sm font-bold ${accent ? 'text-[#F5A623]' : 'text-[#E0E0F0]'}`}>{value}</div>
       <div className="text-[9px] text-[#7777A0] uppercase tracking-wider">{label}</div>
     </div>
   );

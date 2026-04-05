@@ -52,6 +52,16 @@ body {
   * { transition-duration: 0.01ms !important; }
 }
 
+/* Graph canvas atmosphere — subtle radial glow */
+.react-flow {
+  background: radial-gradient(
+    ellipse at 50% 35%,
+    rgba(245, 166, 35, 0.025) 0%,
+    rgba(74, 158, 224, 0.015) 30%,
+    transparent 70%
+  ) !important;
+}
+
 /* React Flow overrides */
 .react-flow__background {
   background: var(--hm-bg) !important;

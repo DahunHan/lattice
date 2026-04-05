@@ -1,9 +1,21 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { BaseEdge, getSmoothStepPath, type EdgeProps } from "@xyflow/react";
 
+const PIPELINE_COLOR = "#4A9EE0";
+
+// Check prefers-reduced-motion (safe for SSR)
+function usePrefersReducedMotion(): boolean {
+  return useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }, []);
+}
+
 function PipelineEdgeComponent(props: EdgeProps) {
+  const reducedMotion = usePrefersReducedMotion();
+
   const [edgePath] = getSmoothStepPath({
     sourceX: props.sourceX,
     sourceY: props.sourceY,
@@ -20,7 +32,7 @@ function PipelineEdgeComponent(props: EdgeProps) {
       <BaseEdge
         path={edgePath}
         style={{
-          stroke: "#4A9EE0",
+          stroke: PIPELINE_COLOR,
           strokeWidth: 6,
           opacity: 0.15,
           filter: "blur(4px)",
@@ -30,7 +42,7 @@ function PipelineEdgeComponent(props: EdgeProps) {
       <BaseEdge
         path={edgePath}
         style={{
-          stroke: "#4A9EE0",
+          stroke: PIPELINE_COLOR,
           strokeWidth: 2,
           opacity: 0.8,
         }}
@@ -39,16 +51,18 @@ function PipelineEdgeComponent(props: EdgeProps) {
       <path
         d={edgePath}
         fill="none"
-        stroke="#4A9EE0"
+        stroke={PIPELINE_COLOR}
         strokeWidth="2"
         strokeDasharray="6 8"
-        className="animated-edge"
+        className={reducedMotion ? "" : "animated-edge"}
         style={{ opacity: 0.6 }}
       />
-      {/* Arrow marker at end */}
-      <circle r="3" fill="#4A9EE0" opacity="0.8">
-        <animateMotion dur="2s" repeatCount="indefinite" path={edgePath} />
-      </circle>
+      {/* Orbiting dot — hidden when reduced motion preferred */}
+      {!reducedMotion && (
+        <circle r="3" fill={PIPELINE_COLOR} opacity="0.8">
+          <animateMotion dur="2s" repeatCount="indefinite" path={edgePath} />
+        </circle>
+      )}
     </>
   );
 }

@@ -6,16 +6,22 @@ import { parseFrontmatter, extractSections, parseMarkdownTable } from './markdow
  * These files have frontmatter with name/description and agent-related content.
  */
 export function isClaudeAgentFile(content: string, path: string): boolean {
-  // Path-based detection: .claude/agents/*.md or agents/*.md
   const normalizedPath = path.replace(/\\/g, '/').toLowerCase();
+  // Strict path check: must be in .claude/agents/ directory specifically
+  // NOT .agents/skills/ (those are SKILL.md files handled by skillParser)
+  if (normalizedPath.includes('/skills/') || normalizedPath.endsWith('skill.md')) {
+    return false;
+  }
   if (normalizedPath.includes('.claude/agents/') || normalizedPath.includes('/.claude/agents/')) {
     return true;
   }
-  // Content-based: has frontmatter with name + description, and looks like agent instructions
+  // Content-based fallback: frontmatter with name + description + agent identity
   const fm = parseFrontmatter(content);
   if (fm['name'] && fm['description']) {
-    const hasAgentKeywords = /(?:you are|responsibilit|your (?:job|role|goal)|core responsibilit|agent)/i.test(content);
-    return hasAgentKeywords;
+    const hasAgentIdentity = /(?:you are the|your (?:job|role|goal) is|core responsibilit)/i.test(content);
+    // Must NOT look like a skill file (skills have different structure)
+    const looksLikeSkill = /(?:## (?:Input|Output|Process|Constraints))/i.test(content);
+    return hasAgentIdentity && !looksLikeSkill;
   }
   return false;
 }

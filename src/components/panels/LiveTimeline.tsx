@@ -42,6 +42,8 @@ export function LiveTimeline({ status, isPolling, lastUpdated }: LiveTimelinePro
       {/* Collapsed bar */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
+        aria-expanded={isExpanded}
+        aria-label="Toggle pipeline log viewer"
         className="w-full glass-strong border-t border-[#1E1E3A] px-6 py-2.5 flex items-center justify-between hover:bg-[#12122A]/80 transition-colors focus-visible:ring-2 focus-visible:ring-[#F5A623]"
       >
         <div className="flex items-center gap-4">
@@ -116,9 +118,9 @@ export function LiveTimeline({ status, isPolling, lastUpdated }: LiveTimelinePro
         {isExpanded && (
           <motion.div
             initial={{ height: 0 }}
-            animate={{ height: 240 }}
+            animate={{ height: "min(240px, 30vh)" }}
             exit={{ height: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
             className="glass-strong border-t border-[#1E1E3A] overflow-hidden"
           >
             <div className="h-full overflow-y-auto px-6 py-3">

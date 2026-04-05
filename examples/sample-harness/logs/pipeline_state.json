@@ -1,0 +1,66 @@
+{
+  "run_id": "run_20260404_001",
+  "status": "pipeline_complete",
+  "started_at": "2026-04-04T10:00:00Z",
+  "completed_at": "2026-04-04T10:01:38Z",
+  "elapsed_seconds": 97,
+  "topics": [
+    {
+      "slug": "rust-linux-kernel-6.14",
+      "title": "Rust in Linux Kernel 6.14: What Changed and Why It Matters",
+      "status": "published",
+      "editor_score": 8.3,
+      "claims_verified": 7,
+      "claims_total": 7,
+      "ghost_post_id": "6620a1b3f2c8e9001a4d7e01",
+      "ghost_url": "https://blog.contentbot.example/rust-linux-kernel-6-14/",
+      "scheduled_publish": "2026-04-04T14:00:00Z"
+    },
+    {
+      "slug": "openai-codex-agent",
+      "title": "OpenAI Codex Agent: Autonomous Coding Enters the Chat",
+      "status": "held_for_review",
+      "editor_score": 7.3,
+      "claims_verified": 8,
+      "claims_total": 9,
+      "flagged_claims": [
+        {
+          "claim": "Codex was released on March 28, 2026",
+          "reason": "Only 1 corroborating source found, minimum is 2",
+          "corroborating_sources": 1
+        }
+      ],
+      "review_channel": "#content-review",
+      "ghost_post_id": null,
+      "ghost_url": null,
+      "scheduled_publish": null
+    },
+    {
+      "slug": "eu-ai-act-enforcement",
+      "title": "EU AI Act Enforcement Begins: What Developers Need to Know",
+      "status": "published",
+      "editor_score": 7.7,
+      "claims_verified": 11,
+      "claims_total": 11,
+      "rewrite_attempts": 1,
+      "ghost_post_id": "6620a1b3f2c8e9001a4d7e02",
+      "ghost_url": "https://blog.contentbot.example/eu-ai-act-enforcement/",
+      "scheduled_publish": "2026-04-04T16:00:00Z"
+    }
+  ],
+  "agents": {
+    "Orchestrator": { "calls": 4, "tokens": 8120, "errors": 0 },
+    "Researcher": { "calls": 3, "tokens": 15430, "errors": 0 },
+    "Writer": { "calls": 4, "tokens": 62840, "errors": 0 },
+    "Editor": { "calls": 4, "tokens": 28910, "errors": 0 },
+    "Fact_Checker": { "calls": 3, "tokens": 27080, "errors": 0 },
+    "Publisher": { "calls": 2, "tokens": 0, "errors": 0 }
+  },
+  "totals": {
+    "llm_calls": 24,
+    "tokens_used": 142380,
+    "articles_published": 2,
+    "articles_held": 1,
+    "articles_failed": 0
+  }
+}
