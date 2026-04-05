@@ -50,9 +50,18 @@ function hasAgentTable(content: string): boolean {
   return /\|\s*(Agent|Name)\s*\|/i.test(content) && /\|\s*(Role|Model)\s*\|/i.test(content);
 }
 
-/** Check if file content looks like an agent map */
-export function isAgentMap(content: string): boolean {
-  return isCSVFormat(content) || hasAgentTable(content);
+/** Check if file content looks like a dedicated agent map file */
+export function isAgentMap(content: string, filename?: string): boolean {
+  // If the file is clearly a README or other doc, skip even if it has agent tables
+  const lowerName = (filename ?? '').toLowerCase();
+  if (lowerName === 'readme.md' || lowerName.startsWith('changelog') || lowerName.startsWith('contributing')) {
+    return false;
+  }
+  // CSV format is a strong signal (AGENT_MAP.md is typically CSV)
+  if (isCSVFormat(content)) return true;
+  // Markdown table needs stronger signals: must have Model/Status columns too (not just Agent/Role)
+  if (hasAgentTable(content) && /\|\s*(Model|Status|Script)\s*\|/i.test(content)) return true;
+  return false;
 }
 
 /** Parse agent map from CSV or markdown table format */

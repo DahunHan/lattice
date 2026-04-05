@@ -29,12 +29,12 @@ export function parsePipeline(content: string, agents: Agent[]): PipelinePhase[]
   for (const section of pipelineSections) {
     const fullText = `${section.heading}\n${section.body}`;
     // Create fresh regex per section to avoid lastIndex carryover (R5 fix)
-    const phasePattern = /phase\s+(\d+)[:\s]*([^\n]*)/gi;
+    const phasePattern = /phase\s+([\d.]+)[:\s]*([^\n]*)/gi;
     const scriptPattern = /agents\/(\w+\.py)/g;
     let phaseMatch;
 
     while ((phaseMatch = phasePattern.exec(fullText)) !== null) {
-      const phaseNum = parseInt(phaseMatch[1], 10);
+      const phaseNum = parseFloat(phaseMatch[1]);
       const phaseName = phaseMatch[2].trim().replace(/^[:\-–—\s]+/, '');
 
       // Find the section of text for this phase (until next Phase)

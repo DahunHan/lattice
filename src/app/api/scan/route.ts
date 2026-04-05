@@ -7,6 +7,7 @@ import { parseProject } from '@/lib/parser';
 const IGNORE_DIRS = new Set([
   'node_modules', '.git', '__pycache__', '.next', 'dist', 'build',
   '.venv', 'venv', 'env', '.tox', '.mypy_cache', '.pytest_cache',
+  '_workspace', 'coverage', '.turbo',
 ]);
 
 const MAX_DEPTH = 6;

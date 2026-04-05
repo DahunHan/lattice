@@ -12,7 +12,7 @@ const items = [
 ];
 
 const edgeItems = [
-  { label: "Pipeline", style: "solid", color: "#6BB0E8" },
+  { label: "Pipeline", style: "solid", color: "#4A9EE0" },
   { label: "Supervision", style: "dashed", color: "#F5A623" },
   { label: "Data Flow", style: "solid", color: "#7F8C8D" },
 ];

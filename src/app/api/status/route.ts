@@ -99,6 +99,15 @@ export async function POST(req: NextRequest) {
     }
 
     const resolvedPath = resolve(projectPath);
+
+    // Block sensitive system directories
+    const BLOCKED_PATHS = ['/etc', '/var', '/proc', '/sys', 'C:\\Windows', 'C:\\Program Files'];
+    for (const blocked of BLOCKED_PATHS) {
+      if (resolvedPath.toLowerCase().startsWith(blocked.toLowerCase())) {
+        return NextResponse.json({ error: 'Access to system directories is not allowed' }, { status: 403 });
+      }
+    }
+
     if (!existsSync(resolvedPath)) {
       return NextResponse.json({ error: 'Path does not exist' }, { status: 404 });
     }
@@ -140,19 +149,7 @@ export async function POST(req: NextRequest) {
     const isComplete = PIPELINE_COMPLETE.test(logs[logs.length - 1]?.message ?? '');
     const isRunning = !isComplete && logs.length > 0 && Object.values(agentStatuses).some(s => s.state === 'running');
 
-    // Mark agents that are in pipeline but haven't run yet as 'waiting'
-    // if the pipeline is currently running
-    if (isRunning) {
-      // Find the last running/completed agent's position
-      let lastActiveIdx = -1;
-      const agentOrder = Object.keys(agentStatuses);
-      for (let i = agentOrder.length - 1; i >= 0; i--) {
-        if (agentStatuses[agentOrder[i]].state === 'running' || agentStatuses[agentOrder[i]].state === 'success') {
-          lastActiveIdx = i;
-          break;
-        }
-      }
-    }
+    // Future: mark upcoming agents as 'waiting' based on pipeline sequence
 
     const status: PipelineStatus = {
       date: String(pipelineState.date ?? new Date().toISOString().slice(0, 10).replace(/-/g, '')),

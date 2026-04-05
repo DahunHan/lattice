@@ -99,7 +99,7 @@ export function FlowCanvas({ initialNodes, initialEdges }: FlowCanvasProps) {
       fitViewOptions={{ padding: 0.3 }}
       minZoom={0.2}
       maxZoom={2}
-      proOptions={{ hideAttribution: true }}
+      proOptions={{ hideAttribution: false }}
       className="!bg-[#0A0A1B]"
     >
       <Background

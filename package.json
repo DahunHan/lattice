@@ -1,7 +1,8 @@
 {
   "name": "hailmary",
   "version": "0.1.0",
-  "private": true,
+  "license": "MIT",
+  "description": "Interactive dashboard that visualizes agent workflows from your project files",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
