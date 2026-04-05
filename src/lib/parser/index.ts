@@ -41,7 +41,7 @@ export function parseProject(files: RawFile[]): ProjectData {
     if (isClaudeAgentFile(file.content, filePath)) {
       const agent = parseClaudeAgentFile(file.content, filePath);
       agents = mergeAgents(agents, [agent]);
-      parsedFiles.push({ filename: file.name, path: filePath, type: 'skill' });
+      parsedFiles.push({ filename: file.name, path: filePath, type: 'claude-agent' });
     }
     // 2. CLAUDE.md project files
     else if (isClaudeMd(file.content, file.name)) {

@@ -1,48 +1,31 @@
-[2026-04-04T10:00:00Z] [INFO] Pipeline run started — run_id: run_20260404_001
-[2026-04-04T10:00:00Z] [INFO] Orchestrator: Loading topic queue from data/topics.json
-[2026-04-04T10:00:01Z] [INFO] Orchestrator: Selected 3 topics — ["rust-linux-kernel-6.14", "openai-codex-agent", "eu-ai-act-enforcement"]
-[2026-04-04T10:00:01Z] [INFO] Orchestrator: Dispatching Researcher for 3 topics
-[2026-04-04T10:00:02Z] [INFO] Researcher: Starting source collection for "rust-linux-kernel-6.14"
-[2026-04-04T10:00:05Z] [INFO] Researcher: Found 8 sources via Feedly API (filtered from 23 candidates)
-[2026-04-04T10:00:07Z] [INFO] Researcher: Starting source collection for "openai-codex-agent"
-[2026-04-04T10:00:11Z] [INFO] Researcher: Found 12 sources via Feedly API (filtered from 31 candidates)
-[2026-04-04T10:00:12Z] [INFO] Researcher: Starting source collection for "eu-ai-act-enforcement"
-[2026-04-04T10:00:15Z] [INFO] Researcher: Found 6 sources via Feedly API (filtered from 19 candidates)
-[2026-04-04T10:00:16Z] [INFO] Researcher: All briefs written — elapsed: 15s
-[2026-04-04T10:00:16Z] [INFO] Orchestrator: Dispatching Writer for 3 briefs
-[2026-04-04T10:00:17Z] [INFO] Writer: Drafting "rust-linux-kernel-6.14" — target 1200 words
-[2026-04-04T10:00:30Z] [INFO] Writer: Draft complete — 1147 words, SEO score 8.2/10
-[2026-04-04T10:00:31Z] [INFO] Writer: Drafting "openai-codex-agent" — target 1100 words
-[2026-04-04T10:00:46Z] [INFO] Writer: Draft complete — 1083 words, SEO score 7.9/10
-[2026-04-04T10:00:47Z] [INFO] Writer: Drafting "eu-ai-act-enforcement" — target 1000 words
-[2026-04-04T10:00:59Z] [INFO] Writer: Draft complete — 962 words, SEO score 8.5/10
-[2026-04-04T10:01:00Z] [INFO] Writer: All drafts written — elapsed: 45s
-[2026-04-04T10:01:00Z] [INFO] Orchestrator: Dispatching Editor and Fact_Checker in parallel
-[2026-04-04T10:01:01Z] [INFO] Editor: Reviewing "rust-linux-kernel-6.14" — clarity: 8, tone: 9, structure: 8 -> composite: 8.3 PASS
-[2026-04-04T10:01:06Z] [INFO] Editor: Reviewing "openai-codex-agent" — clarity: 7, tone: 8, structure: 7 -> composite: 7.3 PASS
-[2026-04-04T10:01:12Z] [INFO] Editor: Reviewing "eu-ai-act-enforcement" — clarity: 6, tone: 7, structure: 6 -> composite: 6.3 FAIL
-[2026-04-04T10:01:12Z] [WARN] Editor: Draft "eu-ai-act-enforcement" below threshold (6.3 < 7.0) — requesting rewrite
-[2026-04-04T10:01:13Z] [INFO] Writer: Rewrite attempt 1 for "eu-ai-act-enforcement"
-[2026-04-04T10:01:18Z] [INFO] Writer: Rewrite complete — 1041 words
-[2026-04-04T10:01:19Z] [INFO] Editor: Re-reviewing "eu-ai-act-enforcement" — clarity: 8, tone: 8, structure: 7 -> composite: 7.7 PASS
-[2026-04-04T10:01:20Z] [INFO] Editor: All reviews complete — elapsed: 20s
-[2026-04-04T10:01:02Z] [INFO] Fact_Checker: Extracting claims from "rust-linux-kernel-6.14" — found 7 claims
-[2026-04-04T10:01:09Z] [INFO] Fact_Checker: 7/7 claims verified (2+ corroborating sources each)
-[2026-04-04T10:01:10Z] [INFO] Fact_Checker: Extracting claims from "openai-codex-agent" — found 9 claims
-[2026-04-04T10:01:19Z] [INFO] Fact_Checker: 8/9 claims verified — 1 claim flagged (release date unconfirmed)
-[2026-04-04T10:01:19Z] [WARN] Fact_Checker: Flagged claim in "openai-codex-agent": "Codex was released on March 28, 2026" — only 1 source found
-[2026-04-04T10:01:20Z] [INFO] Fact_Checker: Extracting claims from "eu-ai-act-enforcement" — found 11 claims
-[2026-04-04T10:01:30Z] [INFO] Fact_Checker: 11/11 claims verified (2+ corroborating sources each)
-[2026-04-04T10:01:31Z] [INFO] Fact_Checker: All verifications complete — elapsed: 30s
-[2026-04-04T10:01:31Z] [INFO] Orchestrator: Gate results — rust-linux-kernel-6.14: PASS, openai-codex-agent: HELD (flagged claim), eu-ai-act-enforcement: PASS
-[2026-04-04T10:01:31Z] [INFO] Orchestrator: Queued "openai-codex-agent" to #content-review for human approval
-[2026-04-04T10:01:32Z] [INFO] Orchestrator: Dispatching Publisher for 2 approved articles
-[2026-04-04T10:01:32Z] [INFO] Publisher: Authenticating with Ghost Admin API
-[2026-04-04T10:01:33Z] [INFO] Publisher: Uploading header image for "rust-linux-kernel-6.14"
-[2026-04-04T10:01:34Z] [INFO] Publisher: Published "rust-linux-kernel-6.14" — post_id: 6620a1b3f2c8e9001a4d7e01, scheduled: 2026-04-04T14:00:00Z
-[2026-04-04T10:01:35Z] [INFO] Publisher: Uploading header image for "eu-ai-act-enforcement"
-[2026-04-04T10:01:36Z] [INFO] Publisher: Published "eu-ai-act-enforcement" — post_id: 6620a1b3f2c8e9001a4d7e02, scheduled: 2026-04-04T16:00:00Z
-[2026-04-04T10:01:37Z] [INFO] Publisher: All articles published — elapsed: 5s
-[2026-04-04T10:01:37Z] [INFO] Orchestrator: Pipeline complete — 2 published, 1 held for review, 0 failed
-[2026-04-04T10:01:37Z] [INFO] Orchestrator: Total elapsed: 97s | LLM calls: 24 | Tokens used: 142,380
-[2026-04-04T10:01:38Z] [INFO] Pipeline run finished — run_id: run_20260404_001
+[2026-04-04T10:00:00Z] [INFO] === ContentBot Pipeline starting ===
+[2026-04-04T10:00:00Z] [INFO] --- Phase 1: Research ---
+[2026-04-04T10:00:01Z] [INFO] Running: researcher.py (max 2 retries, 600s timeout)
+[2026-04-04T10:00:05Z] [INFO] Researcher: Found 8 sources for "rust-linux-kernel-6.14"
+[2026-04-04T10:00:11Z] [INFO] Researcher: Found 12 sources for "openai-codex-agent"
+[2026-04-04T10:00:15Z] [INFO] Researcher: Found 6 sources for "eu-ai-act-enforcement"
+[2026-04-04T10:00:16Z] [SUCCESS] researcher.py completed successfully
+[2026-04-04T10:00:16Z] [INFO] --- Phase 2: Drafting ---
+[2026-04-04T10:00:17Z] [INFO] Running: writer.py (max 2 retries, 900s timeout)
+[2026-04-04T10:00:35Z] [INFO] Writer: Draft 1/3 complete — "Rust in Linux 6.14" (1,847 words)
+[2026-04-04T10:00:52Z] [INFO] Writer: Draft 2/3 complete — "OpenAI Codex Agent" (2,103 words)
+[2026-04-04T10:01:02Z] [INFO] Writer: Draft 3/3 complete — "EU AI Act Enforcement" (1,654 words)
+[2026-04-04T10:01:02Z] [SUCCESS] writer.py completed successfully
+[2026-04-04T10:01:02Z] [INFO] --- Phase 3: Review (parallel) ---
+[2026-04-04T10:01:03Z] [INFO] Running: editor.py (max 2 retries, 600s timeout)
+[2026-04-04T10:01:10Z] [INFO] Editor: "Rust in Linux 6.14" — score 8.1/10, approved
+[2026-04-04T10:01:15Z] [WARN] Editor: "EU AI Act Enforcement" — score 6.3/10, requesting rewrite
+[2026-04-04T10:01:20Z] [INFO] Editor: Rewrite submitted, new score 7.7/10, approved
+[2026-04-04T10:01:23Z] [SUCCESS] editor.py completed successfully
+[2026-04-04T10:01:03Z] [INFO] Running: fact_checker.py (max 2 retries, 600s timeout)
+[2026-04-04T10:01:18Z] [INFO] Fact_Checker: "Rust in Linux 6.14" — all claims verified
+[2026-04-04T10:01:28Z] [WARN] Fact_Checker: "OpenAI Codex Agent" — claim "processes 1M tokens/minute" unverifiable, flagged
+[2026-04-04T10:01:33Z] [INFO] Fact_Checker: "EU AI Act Enforcement" — all claims verified
+[2026-04-04T10:01:33Z] [SUCCESS] fact_checker.py completed successfully
+[2026-04-04T10:01:33Z] [INFO] --- Phase 4: Publishing ---
+[2026-04-04T10:01:34Z] [INFO] Running: publisher.py (max 1 retries, 300s timeout)
+[2026-04-04T10:01:36Z] [INFO] Publisher: Published "Rust in Linux 6.14" to Ghost CMS
+[2026-04-04T10:01:37Z] [INFO] Publisher: Published "EU AI Act Enforcement" to Ghost CMS
+[2026-04-04T10:01:37Z] [WARN] Publisher: "OpenAI Codex Agent" held for manual review (unverified claim)
+[2026-04-04T10:01:38Z] [SUCCESS] publisher.py completed successfully
+[2026-04-04T10:01:38Z] [SUCCESS] === Pipeline complete === (2 published, 1 held)

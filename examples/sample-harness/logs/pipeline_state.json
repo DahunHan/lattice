@@ -1,6 +1,7 @@
 {
   "run_id": "run_20260404_001",
-  "status": "pipeline_complete",
+  "phase": "pipeline_complete",
+  "date": "20260404",
   "started_at": "2026-04-04T10:00:00Z",
   "completed_at": "2026-04-04T10:01:38Z",
   "elapsed_seconds": 97,

@@ -215,10 +215,10 @@ describe('parseProject', () => {
   });
 
   describe('file type classification', () => {
-    it('classifies .claude/agents files as skill type', () => {
+    it('classifies .claude/agents files as claude-agent type', () => {
       const result = parseProject([ARCHITECT_AGENT]);
       expect(result.rawFiles).toContainEqual(
-        expect.objectContaining({ filename: 'architect.md', type: 'skill' }),
+        expect.objectContaining({ filename: 'architect.md', type: 'claude-agent' }),
       );
     });
   });

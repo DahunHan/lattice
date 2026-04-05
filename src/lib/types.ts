@@ -64,7 +64,7 @@ export interface ProjectMetadata {
 export interface ParsedFile {
   filename: string;
   path: string;
-  type: 'agent-map' | 'architecture' | 'claude-md' | 'skill' | 'generic';
+  type: 'agent-map' | 'architecture' | 'claude-md' | 'skill' | 'claude-agent' | 'generic';
 }
 
 export interface ProjectData {
