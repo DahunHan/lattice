@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+:root {
+  --hm-bg: #0A0A1B;
+  --hm-surface: #12122A;
+  --hm-surface-alt: #161632;
+  --hm-border: #1E1E3A;
+  --hm-border-light: #2E2E52;
+  --hm-text: #E0E0F0;
+  --hm-text-dim: #9999BB;
+  --hm-accent: #F5A623;
+  --hm-accent-dim: rgba(245, 166, 35, 0.15);
+  --hm-text-muted: #7777A0;
+
+  --hm-haiku: #4A9EE0;
+  --hm-sonnet: #2ECC71;
+  --hm-opus: #9B59B6;
+  --hm-gemini: #F1C40F;
+  --hm-python: #7F8C8D;
+}
+
+@theme inline {
+  --color-background: var(--hm-bg);
+  --color-foreground: var(--hm-text);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hm-border-light) transparent;
+}
+
+body {
+  background: var(--hm-bg);
+  color: var(--hm-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* D4: Global focus-visible indicator */
+*:focus-visible {
+  outline: 2px solid var(--hm-accent);
+  outline-offset: 2px;
+}
+
+/* D3: Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .animated-edge, .pulse-glow { animation: none !important; }
+  .animated-gradient { animation: none !important; }
+  * { transition-duration: 0.01ms !important; }
+}
+
+/* React Flow overrides */
+.react-flow__background {
+  background: var(--hm-bg) !important;
+}
+
+.react-flow__minimap {
+  background: var(--hm-surface) !important;
+  border: 1px solid var(--hm-border) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+.react-flow__controls {
+  border: 1px solid var(--hm-border) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+.react-flow__controls-button {
+  background: var(--hm-surface) !important;
+  border: none !important;
+  border-bottom: 1px solid var(--hm-border) !important;
+  fill: var(--hm-text-dim) !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--hm-surface-alt) !important;
+  fill: var(--hm-text) !important;
+}
+
+/* Glass morphism utility */
+.glass {
+  background: rgba(18, 18, 42, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-strong {
+  background: rgba(18, 18, 42, 0.85);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Glow effect */
+.glow-accent {
+  box-shadow: 0 0 20px rgba(245, 166, 35, 0.2), 0 0 60px rgba(245, 166, 35, 0.1);
+}
+
+/* Smooth transitions */
+.transition-smooth {
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animated gradient background for landing */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animated-gradient {
+  background: linear-gradient(
+    135deg,
+    #0A0A1B 0%,
+    #12122A 25%,
+    #1A0A2A 50%,
+    #0A1A2A 75%,
+    #0A0A1B 100%
+  );
+  background-size: 400% 400%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+/* Pulse glow for nodes */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Flow animation for edges */
+@keyframes flow {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
+}
+
+.animated-edge {
+  stroke-dasharray: 8 4;
+  animation: flow 1s linear infinite;
+}
