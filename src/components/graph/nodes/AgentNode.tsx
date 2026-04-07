@@ -22,8 +22,14 @@ function formatDuration(ms: number): string {
   return `${minutes}m ${secs}s`;
 }
 
+const DIFF_BADGE: Record<string, { label: string; color: string; bg: string }> = {
+  added: { label: 'NEW', color: '#2ECC71', bg: '#2ECC71' },
+  removed: { label: 'DEL', color: '#E74C3C', bg: '#E74C3C' },
+  changed: { label: 'MOD', color: '#F5A623', bg: '#F5A623' },
+};
+
 function AgentNodeComponent({ data }: NodeProps<Node<AgentNodeData>>) {
-  const { agent, isPaused, liveStatus } = data;
+  const { agent, isPaused, liveStatus, diffStatus } = data;
   const colors = getAgentColors(agent);
   const isLive = liveStatus && liveStatus.state !== 'idle';
   const isRunning = liveStatus?.state === 'running';
@@ -64,6 +70,20 @@ function AgentNodeComponent({ data }: NodeProps<Node<AgentNodeData>>) {
               borderRadius: '16px',
             }}
           />
+        )}
+
+        {/* Diff badge */}
+        {diffStatus && DIFF_BADGE[diffStatus] && (
+          <div
+            className="absolute -top-2 -right-2 z-10 px-1.5 py-0.5 rounded text-[8px] font-bold tracking-wider"
+            style={{
+              background: DIFF_BADGE[diffStatus].bg + '25',
+              color: DIFF_BADGE[diffStatus].color,
+              border: `1px solid ${DIFF_BADGE[diffStatus].color}40`,
+            }}
+          >
+            {DIFF_BADGE[diffStatus].label}
+          </div>
         )}
 
         {/* Card */}

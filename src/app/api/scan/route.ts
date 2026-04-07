@@ -12,7 +12,16 @@ const IGNORE_DIRS = new Set([
 
 const MAX_DEPTH = 6;
 const MAX_FILES = 200;
-const MAX_FILE_SIZE = 1024 * 1024; // 1MB
+const MAX_FILE_SIZE = 1024 * 1024; // 1MB for .md files
+const MAX_PY_FILE_SIZE = 50 * 1024; // 50KB for .py files — agent definitions are small
+
+// Quick fingerprints: if a .py file's first 2KB doesn't contain any of these,
+// it's not an agent definition file and we skip reading the rest.
+const PY_AGENT_FINGERPRINTS = [
+  'from crewai', '@CrewBase', 'from agents', 'from autogen', 'autogen_agentchat',
+  'StateGraph', 'add_node', 'AssistantAgent', 'UserProxyAgent', 'GroupChat',
+  'Agent(', 'handoffs',
+];
 
 // Sensitive paths that should never be scanned
 const BLOCKED_PATHS = [
@@ -38,7 +47,8 @@ async function findProjectFiles(
   dir: string,
   baseDir: string,
   depth: number,
-  results: { name: string; content: string; path: string }[]
+  results: { name: string; content: string; path: string }[],
+  counters: { scanned: number; skipped: number }
 ): Promise<void> {
   if (depth > MAX_DEPTH || results.length >= MAX_FILES) return;
 
@@ -49,43 +59,78 @@ async function findProjectFiles(
     return;
   }
 
+  const subdirs: { fullPath: string }[] = [];
+  const fileReads: Promise<void>[] = [];
+
   for (const entry of entries) {
     if (results.length >= MAX_FILES) break;
 
     const fullPath = join(dir, entry.name);
 
-    // Symlink protection: resolve and verify still under baseDir
-    try {
-      const resolved = await realpath(fullPath);
-      if (!resolved.startsWith(baseDir)) continue;
-    } catch {
-      continue;
-    }
-
     if (entry.isDirectory()) {
-      // Block sensitive directories
       if (BLOCKED_DIR_NAMES.has(entry.name)) continue;
-
       const isAllowedDotDir = entry.name === '.agents' || entry.name === '.claude';
       if (isAllowedDotDir || (!IGNORE_DIRS.has(entry.name) && !entry.name.startsWith('.'))) {
-        await findProjectFiles(fullPath, baseDir, depth + 1, results);
+        subdirs.push({ fullPath });
       }
     } else if (SCANNABLE_EXTENSIONS.has(extname(entry.name).toLowerCase()) ||
                ALLOWED_JSON_FILES.has(entry.name.toLowerCase())) {
-      try {
-        const stats = await stat(fullPath);
-        if (stats.size > MAX_FILE_SIZE) continue;
-
-        const content = await readFile(fullPath, 'utf-8');
-        results.push({
-          name: entry.name,
-          content,
-          path: relative(baseDir, fullPath).replace(/\\/g, '/'),
-        });
-      } catch {
-        // Skip unreadable files
-      }
+      fileReads.push(readProjectFile(fullPath, baseDir, entry.name, results, counters));
     }
+  }
+
+  // Read files in parallel (batch of up to 10)
+  for (let i = 0; i < fileReads.length; i += 10) {
+    await Promise.all(fileReads.slice(i, i + 10));
+  }
+
+  // Traverse subdirectories
+  for (const sub of subdirs) {
+    if (results.length >= MAX_FILES) break;
+    await findProjectFiles(sub.fullPath, baseDir, depth + 1, results, counters);
+  }
+}
+
+async function readProjectFile(
+  fullPath: string,
+  baseDir: string,
+  filename: string,
+  results: { name: string; content: string; path: string }[],
+  counters: { scanned: number; skipped: number }
+): Promise<void> {
+  try {
+    // Symlink protection
+    const resolved = await realpath(fullPath);
+    if (!resolved.startsWith(baseDir)) { counters.skipped++; return; }
+
+    const fileStats = await stat(fullPath);
+    const ext = extname(filename).toLowerCase();
+    const isPython = ext === '.py';
+
+    // Size limits: stricter for .py files (agent defs are small)
+    const sizeLimit = isPython ? MAX_PY_FILE_SIZE : MAX_FILE_SIZE;
+    if (fileStats.size > sizeLimit) { counters.skipped++; return; }
+
+    // For .py files: quick fingerprint check on first 2KB before reading the full file
+    if (isPython && fileStats.size > 2048) {
+      const fd = await import('fs').then(fs => fs.promises.open(fullPath, 'r'));
+      const buf = Buffer.alloc(2048);
+      await fd.read(buf, 0, 2048, 0);
+      await fd.close();
+      const head = buf.toString('utf-8');
+      const hasFingerprint = PY_AGENT_FINGERPRINTS.some(fp => head.includes(fp));
+      if (!hasFingerprint) { counters.skipped++; return; }
+    }
+
+    const content = await readFile(fullPath, 'utf-8');
+    counters.scanned++;
+    results.push({
+      name: filename,
+      content,
+      path: relative(baseDir, fullPath).replace(/\\/g, '/'),
+    });
+  } catch {
+    counters.skipped++;
   }
 }
 
@@ -132,7 +177,8 @@ export async function POST(req: NextRequest) {
 
     // Find all project files (md, py, yaml, yml, json)
     const files: { name: string; content: string; path: string }[] = [];
-    await findProjectFiles(realRoot, realRoot, 0, files);
+    const counters = { scanned: 0, skipped: 0 };
+    await findProjectFiles(realRoot, realRoot, 0, files, counters);
 
     if (files.length === 0) {
       return NextResponse.json({ error: 'No parseable files found in directory' }, { status: 404 });
@@ -143,7 +189,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       data: projectData,
-      filesScanned: files.length,
+      filesScanned: counters.scanned,
+      filesSkipped: counters.skipped,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

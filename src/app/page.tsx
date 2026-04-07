@@ -301,6 +301,19 @@ export default function LandingPage() {
 
           {/* Error / Status */}
           <AnimatePresence>
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="mt-4 px-4 py-3 rounded-xl bg-[#4A9EE0]/10 border border-[#4A9EE0]/20 text-[#4A9EE0] text-sm flex items-center gap-3"
+              >
+                <svg className="animate-spin h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="12" cy="12" r="10" strokeDasharray="31.4" strokeDashoffset="10" />
+                </svg>
+                Scanning files &mdash; reading .md, .py, .yaml files and parsing agent definitions...
+              </motion.div>
+            )}
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
@@ -311,14 +324,14 @@ export default function LandingPage() {
                 {error}
               </motion.div>
             )}
-            {filesCount !== null && !error && (
+            {filesCount !== null && !error && !isLoading && (
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 className="mt-4 px-4 py-3 rounded-xl bg-[#2ECC71]/10 border border-[#2ECC71]/20 text-[#2ECC71] text-sm"
               >
-                Found {filesCount} markdown files. Building graph...
+                Found {filesCount} files. Building graph...
               </motion.div>
             )}
           </AnimatePresence>

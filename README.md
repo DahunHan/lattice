@@ -75,6 +75,19 @@ Your project folder          HailMary
 - Parse warnings shown as a dismissible banner with detailed warning count
 - Graceful degradation: partial results are always returned
 
+### Export
+- **JSON** — Full project data (agents, edges, metadata) for programmatic use
+- **Mermaid** — Diagram syntax that renders in GitHub, Notion, mermaid.live
+- **PNG** — High-res screenshot of the graph with dark background
+- **SVG** — Vector image for docs, presentations, print
+
+### Snapshot Diff
+- Save snapshots of your agent architecture at any point
+- Compare current state against any saved snapshot
+- Visual diff badges on nodes: NEW (green), MOD (amber), DEL (red)
+- Summary panel shows added/removed/changed agents and edges
+- Snapshots persist across sessions
+
 ### CLI Distribution
 - `npx hailmary` — zero-install local server
 - `npx hailmary ./my-project` — auto-scan a folder on startup
@@ -126,7 +139,7 @@ HailMary ships with a sample harness in `examples/sample-harness/`. Scan that fo
 | Animation | Framer Motion |
 | Styling | Tailwind CSS v4 |
 | Language | TypeScript (strict mode) |
-| Testing | Vitest (79 tests) |
+| Testing | Vitest (88 tests) |
 
 ## Project Structure
 
@@ -160,6 +173,10 @@ src/
       buildGraph.ts             #   Filters + transforms agents into React Flow nodes/edges
       layoutEngine.ts           #   Dagre hierarchical layout computation
     theme/colors.ts             #   Model-family color palette
+    export/exportGraph.ts       #   JSON, Mermaid, PNG, SVG export
+    snapshot/
+      snapshotTypes.ts          #   Snapshot and DiffResult types
+      diffEngine.ts             #   Compare snapshots, produce structured diffs
     types.ts                    #   Full TypeScript type definitions
   store/useProjectStore.ts      # Zustand store with localStorage persistence
   hooks/useAgentStatus.ts       # Live monitoring polling hook
@@ -199,8 +216,8 @@ Phase 1 (one-way visualization) is fully built and functional:
 
 ### Phase 2: From Map to Dashboard
 - [x] Framework plugins — CrewAI, LangGraph, AutoGen, OpenAI Agents SDK
-- [ ] Snapshot diff — compare scans, highlight added/removed/changed agents
-- [ ] Export — PNG, SVG, JSON, Mermaid diagram
+- [x] Snapshot diff — save snapshots, compare, visual diff badges on nodes
+- [x] Export — PNG, SVG, JSON, Mermaid diagram
 - [x] CLI distribution — `npx hailmary` with auto-scan, standalone build
 - [ ] File watcher — sub-second monitoring updates via fs.watch
 

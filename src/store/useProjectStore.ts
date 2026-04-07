@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ProjectData, PipelineStatus } from '@/lib/types';
+import type { Snapshot, DiffResult } from '@/lib/snapshot/snapshotTypes';
+import { diffSnapshots } from '@/lib/snapshot/diffEngine';
 
 interface ProjectStore {
   project: ProjectData | null;
@@ -26,6 +28,15 @@ interface ProjectStore {
   pipelineStatus: PipelineStatus | null;
   setPipelineStatus: (status: PipelineStatus | null) => void;
 
+  // Snapshots
+  snapshots: Snapshot[];
+  activeComparisonId: string | null;
+  diffResult: DiffResult | null;
+  saveSnapshot: (label?: string) => void;
+  deleteSnapshot: (id: string) => void;
+  compareWith: (id: string) => void;
+  clearComparison: () => void;
+
   // Hydration tracking
   _hasHydrated: boolean;
 }
@@ -35,7 +46,7 @@ export const useProjectStore = create<ProjectStore>()(
     (set) => ({
       project: null,
       projectPath: null,
-      setProject: (data, path) => set({ project: data, projectPath: path ?? null }),
+      setProject: (data, path) => set({ project: data, projectPath: path ?? null, activeComparisonId: null, diffResult: null }),
       clearProject: () => set({ project: null, selectedAgentId: null, projectPath: null }),
 
       selectedAgentId: null,
@@ -61,6 +72,42 @@ export const useProjectStore = create<ProjectStore>()(
       pipelineStatus: null,
       setPipelineStatus: (status) => set({ pipelineStatus: status }),
 
+      // Snapshots
+      snapshots: [],
+      activeComparisonId: null,
+      diffResult: null,
+      saveSnapshot: (label) =>
+        set((s) => {
+          if (!s.project) return s;
+          // Strip rawFiles from snapshot to save space (they can be large)
+          const { rawFiles: _, ...projectWithoutRaw } = s.project;
+          const snapshot: Snapshot = {
+            id: crypto.randomUUID(),
+            timestamp: new Date().toISOString(),
+            label: label ?? `Snapshot ${s.snapshots.length + 1}`,
+            projectData: structuredClone({ ...projectWithoutRaw, rawFiles: [] }) as ProjectData,
+          };
+          // Cap at 20 snapshots, remove oldest if needed
+          const updated = [...s.snapshots, snapshot];
+          if (updated.length > 20) updated.shift();
+          return { snapshots: updated };
+        }),
+      deleteSnapshot: (id) =>
+        set((s) => ({
+          snapshots: s.snapshots.filter(snap => snap.id !== id),
+          activeComparisonId: s.activeComparisonId === id ? null : s.activeComparisonId,
+          diffResult: s.activeComparisonId === id ? null : s.diffResult,
+        })),
+      compareWith: (id) =>
+        set((s) => {
+          if (!s.project) return s;
+          const snapshot = s.snapshots.find(snap => snap.id === id);
+          if (!snapshot) return s;
+          const result = diffSnapshots(s.project, snapshot.projectData);
+          return { activeComparisonId: id, diffResult: result };
+        }),
+      clearComparison: () => set({ activeComparisonId: null, diffResult: null }),
+
       _hasHydrated: false,
     }),
     {
@@ -83,17 +130,22 @@ export const useProjectStore = create<ProjectStore>()(
         showArchived: state.showArchived,
         pausedAgentIds: state.pausedAgentIds,
         monitoringEnabled: state.monitoringEnabled,
+        snapshots: state.snapshots,
       }),
-      version: 1,
+      version: 2,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>;
-        if (version === 0) {
-          // v0 → v1: ensure warnings array exists on project
+        if (version < 1) {
           if (state.project && typeof state.project === 'object') {
             const proj = state.project as Record<string, unknown>;
             if (!Array.isArray(proj.warnings)) {
               proj.warnings = [];
             }
+          }
+        }
+        if (version < 2) {
+          if (!Array.isArray(state.snapshots)) {
+            state.snapshots = [];
           }
         }
         return state as never;

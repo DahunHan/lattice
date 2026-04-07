@@ -84,11 +84,15 @@ export interface ProjectData {
 
 // ── React Flow node data ────────────────────────────────────────────────────
 
+export type DiffStatus = 'added' | 'removed' | 'changed' | null;
+
 export interface AgentNodeData {
   agent: Agent;
   isSelected: boolean;
   isPaused: boolean;
   liveStatus?: LiveAgentStatus;
+  diffStatus?: DiffStatus;
+  diffDetails?: string;
   [key: string]: unknown;
 }
 

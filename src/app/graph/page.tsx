@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ReactFlowProvider } from "@xyflow/react";
 import { useProjectStore } from "@/store/useProjectStore";
@@ -12,6 +12,8 @@ import { ProjectOverview } from "@/components/panels/ProjectOverview";
 import { Legend } from "@/components/panels/Legend";
 import { LiveTimeline } from "@/components/panels/LiveTimeline";
 import { MonitoringToggle } from "@/components/panels/MonitoringToggle";
+import { ExportMenu } from "@/components/graph/ExportMenu";
+import { SnapshotPanel } from "@/components/panels/SnapshotPanel";
 
 export default function GraphPage() {
   const router = useRouter();
@@ -23,6 +25,7 @@ export default function GraphPage() {
   const monitoringEnabled = useProjectStore((s) => s.monitoringEnabled);
   const setPipelineStatus = useProjectStore((s) => s.setPipelineStatus);
   const hasHydrated = useProjectStore((s) => s._hasHydrated);
+  const diffResult = useProjectStore((s) => s.diffResult);
 
   // Redirect to landing if no project loaded (only after hydration)
   useEffect(() => {
@@ -61,11 +64,30 @@ export default function GraphPage() {
       }
     }
 
+    // Inject diff status into node data
+    if (diffResult) {
+      const addedIds = new Set(diffResult.added.map(a => a.id));
+      const changedIds = new Set(diffResult.changed.map(c => c.agentId));
+      for (const node of graph.nodes) {
+        if (addedIds.has(node.id)) {
+          node.data = { ...node.data, diffStatus: 'added' as const };
+        } else if (changedIds.has(node.id)) {
+          const change = diffResult.changed.find(c => c.agentId === node.id);
+          const details = change?.changes.map(c => `${c.field}: ${c.from} → ${c.to}`).join(', ');
+          node.data = { ...node.data, diffStatus: 'changed' as const, diffDetails: details };
+        }
+      }
+    }
+
     return graph;
-  }, [project, showArchived, pausedAgentIds, searchQuery, status]);
+  }, [project, showArchived, pausedAgentIds, searchQuery, status, diffResult]);
 
   const [warningDismissed, setWarningDismissed] = useState(false);
   const warningCount = project?.warnings?.length ?? 0;
+  const graphElementRef = useRef<HTMLElement | null>(null);
+  const handleContainerRef = useCallback((el: HTMLElement | null) => {
+    graphElementRef.current = el;
+  }, []);
 
   if (!hasHydrated || !project) {
     return (
@@ -101,7 +123,9 @@ export default function GraphPage() {
             {project.metadata.name}
           </span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {/* Export menu */}
+          <ExportMenu project={project} graphElement={graphElementRef.current} />
           {/* Live monitoring toggle */}
           {projectPath && (
             <MonitoringToggle />
@@ -130,13 +154,14 @@ export default function GraphPage() {
       {/* Main canvas area */}
       <div className="absolute inset-0 pt-12" style={{ paddingTop: warningCount > 0 && !warningDismissed ? '80px' : '48px', paddingBottom: monitoringEnabled && status ? '40px' : '0' }}>
         <ReactFlowProvider>
-          <FlowCanvas initialNodes={nodes} initialEdges={edges} />
+          <FlowCanvas initialNodes={nodes} initialEdges={edges} onContainerRef={handleContainerRef} />
         </ReactFlowProvider>
 
         {/* Overlay panels */}
         <ProjectOverview />
         <Legend />
         <AgentDetailPanel />
+        <SnapshotPanel />
       </div>
 
       {/* Live timeline bar */}

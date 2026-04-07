@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   ReactFlow,
   Background,
@@ -49,9 +49,19 @@ function minimapNodeColor(n: Node): string {
 interface FlowCanvasProps {
   initialNodes: Node<AgentNodeData>[];
   initialEdges: Edge[];
+  onContainerRef?: (el: HTMLElement | null) => void;
 }
 
-export function FlowCanvas({ initialNodes, initialEdges }: FlowCanvasProps) {
+export function FlowCanvas({ initialNodes, initialEdges, onContainerRef }: FlowCanvasProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (onContainerRef) {
+      // Find the react-flow viewport element inside our container
+      const viewport = containerRef.current?.querySelector('.react-flow__viewport')?.parentElement as HTMLElement | null;
+      onContainerRef(viewport ?? containerRef.current);
+    }
+  }, [onContainerRef]);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const selectAgent = useProjectStore((s) => s.selectAgent);
@@ -86,6 +96,7 @@ export function FlowCanvas({ initialNodes, initialEdges }: FlowCanvasProps) {
   );
 
   return (
+    <div ref={containerRef} className="w-full h-full">
     <ReactFlow
       nodes={styledNodes}
       edges={edges}
@@ -119,5 +130,6 @@ export function FlowCanvas({ initialNodes, initialEdges }: FlowCanvasProps) {
         style={{ background: "#12122A" }}
       />
     </ReactFlow>
+    </div>
   );
 }
