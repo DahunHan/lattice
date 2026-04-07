@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { parseProject, type RawFile } from "@/lib/parser";
@@ -79,15 +79,15 @@ export default function LandingPage() {
     [handleFiles]
   );
 
-  const handleScan = useCallback(async () => {
-    if (!folderPath.trim()) return;
+  const scanFolder = useCallback(async (path: string) => {
+    if (!path.trim()) return;
     setIsLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: folderPath.trim() }),
+        body: JSON.stringify({ path: path.trim() }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -95,14 +95,36 @@ export default function LandingPage() {
         return;
       }
       setFilesCount(json.filesScanned);
-      setProject(json.data, folderPath.trim());
+      setProject(json.data, path.trim());
       router.push("/graph");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to scan folder");
     } finally {
       setIsLoading(false);
     }
-  }, [folderPath, setProject, router]);
+  }, [setProject, router]);
+
+  const handleScan = useCallback(() => {
+    scanFolder(folderPath);
+  }, [folderPath, scanFolder]);
+
+  // Auto-scan if launched via CLI with a path argument (only once)
+  const autoScannedRef = useRef(false);
+  useEffect(() => {
+    if (autoScannedRef.current || existingProject) return;
+    let cancelled = false;
+    fetch("/api/config")
+      .then(res => res.json())
+      .then(config => {
+        if (!cancelled && config.scanPath && !autoScannedRef.current) {
+          autoScannedRef.current = true;
+          setFolderPath(config.scanPath);
+          scanFolder(config.scanPath);
+        }
+      })
+      .catch(() => { /* ignore — not launched via CLI */ });
+    return () => { cancelled = true; };
+  }, [scanFolder, existingProject]);
 
   return (
     <div className="animated-gradient min-h-screen flex items-center justify-center p-8 relative overflow-hidden">

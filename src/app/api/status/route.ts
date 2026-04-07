@@ -91,6 +91,15 @@ async function findTodayLog(logsDir: string): Promise<string | null> {
 
 export async function POST(req: NextRequest) {
   try {
+    // CSRF protection: only allow requests from localhost origins
+    const origin = req.headers.get('origin');
+    if (origin) {
+      const url = new URL(origin);
+      if (url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
     const body = await req.json();
     const projectPath = body.path;
 
@@ -101,7 +110,8 @@ export async function POST(req: NextRequest) {
     const resolvedPath = resolve(projectPath);
 
     // Block sensitive system directories
-    const BLOCKED_PATHS = ['/etc', '/var', '/proc', '/sys', 'C:\\Windows', 'C:\\Program Files'];
+    const BLOCKED_PATHS = ['/etc', '/var', '/proc', '/sys', '/root', '/boot',
+      'C:\\Windows', 'C:\\Program Files', 'C:\\Program Files (x86)', 'C:\\ProgramData'];
     for (const blocked of BLOCKED_PATHS) {
       if (resolvedPath.toLowerCase().startsWith(blocked.toLowerCase())) {
         return NextResponse.json({ error: 'Access to system directories is not allowed' }, { status: 403 });

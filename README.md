@@ -75,10 +75,19 @@ Your project folder          HailMary
 - Parse warnings shown as a dismissible banner with detailed warning count
 - Graceful degradation: partial results are always returned
 
+### CLI Distribution
+- `npx hailmary` — zero-install local server
+- `npx hailmary ./my-project` — auto-scan a folder on startup
+- `npx hailmary -p 4000` — custom port
+- Standalone build with automatic browser open
+- Port-in-use detection with helpful suggestions
+
 ### Security (Local-First)
 - No data leaves your machine — no external APIs, no telemetry
+- Server binds to `127.0.0.1` only — no network exposure
+- Origin header validation on all API endpoints (CSRF protection)
 - Symlink validation prevents path traversal
-- System directory blocking (Windows, /etc, /proc, /sys)
+- Sensitive directory blocking (`.ssh`, `.aws`, `.config`, system dirs)
 - File size limits (1MB per file, 200 files max)
 
 ## Quick Start
@@ -93,6 +102,14 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000) and either:
 - **Drag & drop** your project's `.md` files onto the landing page
 - **Enter a folder path** and click Scan
+
+### CLI (recommended)
+
+```bash
+npx hailmary                    # Start dashboard
+npx hailmary ./my-project       # Auto-scan a folder
+npx hailmary -p 4000            # Custom port
+```
 
 ### Try the Example
 
@@ -184,7 +201,7 @@ Phase 1 (one-way visualization) is fully built and functional:
 - [x] Framework plugins — CrewAI, LangGraph, AutoGen, OpenAI Agents SDK
 - [ ] Snapshot diff — compare scans, highlight added/removed/changed agents
 - [ ] Export — PNG, SVG, JSON, Mermaid diagram
-- [ ] CLI distribution — `npx hailmary` for zero-install local use
+- [x] CLI distribution — `npx hailmary` with auto-scan, standalone build
 - [ ] File watcher — sub-second monitoring updates via fs.watch
 
 ### Phase 3: Agent IDE Companion

@@ -3,10 +3,26 @@
   "version": "0.1.0",
   "license": "MIT",
   "description": "Interactive dashboard that visualizes agent workflows from your project files",
+  "bin": {
+    "hailmary": "./bin/cli.mjs"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "public/",
+    ".next/standalone/",
+    ".next/static/",
+    "next.config.ts",
+    "tsconfig.json",
+    "postcss.config.mjs",
+    "eslint.config.mjs",
+    "package.json"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "prepublishOnly": "npm run build",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest"

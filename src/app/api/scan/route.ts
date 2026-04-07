@@ -15,7 +15,19 @@ const MAX_FILES = 200;
 const MAX_FILE_SIZE = 1024 * 1024; // 1MB
 
 // Sensitive paths that should never be scanned
-const BLOCKED_PATHS = ['/etc', '/var', '/proc', '/sys', 'C:\\Windows', 'C:\\Program Files'];
+const BLOCKED_PATHS = [
+  // Unix system dirs
+  '/etc', '/var', '/proc', '/sys', '/root', '/boot', '/dev', '/sbin', '/usr/sbin',
+  // Windows system dirs
+  'C:\\Windows', 'C:\\Program Files', 'C:\\Program Files (x86)', 'C:\\ProgramData',
+];
+
+// Sensitive directory names that should never be traversed into
+const BLOCKED_DIR_NAMES = new Set([
+  '.ssh', '.aws', '.azure', '.gcloud', '.config', '.gnupg', '.kube',
+  '.docker', '.npm', '.cargo', '.rustup', '.pyenv',
+  'AppData', '.local', '.cache',
+]);
 
 // File extensions to scan for agent definitions
 const SCANNABLE_EXTENSIONS = new Set(['.md', '.py', '.yaml', '.yml']);
@@ -51,6 +63,9 @@ async function findProjectFiles(
     }
 
     if (entry.isDirectory()) {
+      // Block sensitive directories
+      if (BLOCKED_DIR_NAMES.has(entry.name)) continue;
+
       const isAllowedDotDir = entry.name === '.agents' || entry.name === '.claude';
       if (isAllowedDotDir || (!IGNORE_DIRS.has(entry.name) && !entry.name.startsWith('.'))) {
         await findProjectFiles(fullPath, baseDir, depth + 1, results);
@@ -76,6 +91,15 @@ async function findProjectFiles(
 
 export async function POST(req: NextRequest) {
   try {
+    // CSRF protection: only allow requests from localhost origins
+    const origin = req.headers.get('origin');
+    if (origin) {
+      const url = new URL(origin);
+      if (url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
     const body = await req.json();
     const projectPath = body.path;
 
