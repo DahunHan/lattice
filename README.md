@@ -139,8 +139,12 @@ Your project folder          Lattice
 ## Quick Start
 
 ```bash
-git clone https://github.com/your-username/lattice.git
-cd lattice/Lattice
+# Option 1: npx (zero install)
+npx lattice-agents
+
+# Option 2: Clone and run
+git clone https://github.com/DahunHan/lattice.git
+cd lattice
 npm install
 npm run dev
 ```
