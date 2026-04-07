@@ -176,7 +176,7 @@ Lattice ships with a sample harness in `examples/sample-harness/`. Scan that fol
 | Animation | Framer Motion |
 | Styling | Tailwind CSS v4 |
 | Language | TypeScript (strict mode) |
-| Testing | Vitest (88 tests, 5 suites) |
+| Testing | Vitest (93 tests, 5 suites) |
 
 ## Project Structure
 
@@ -185,13 +185,22 @@ src/
   app/                          # Next.js pages and API routes
     api/scan/                   #   POST: scan a folder for .md files
     api/status/                 #   POST: poll pipeline log status
+    api/check-changes/          #   POST: detect file changes for auto-sync
+    api/discover-logs/          #   POST: find log directories automatically
+    api/git/                    #   POST: git commit info per agent file
+    api/health/                 #   POST: agent script health checks
+    api/readme/                 #   POST: inject Mermaid diagram into README
+    api/write-agent/            #   GET/POST: read and write agent files
     graph/                      #   Interactive graph visualization page
   components/
     graph/
       nodes/                    #   AgentNode, OrchestratorNode
       edges/                    #   PipelineEdge, SupervisionEdge, DataFlowEdge
       FlowCanvas.tsx            #   React Flow wrapper
+    modals/
+      DiffPreviewModal.tsx      #   Before/after diff preview for file writes
     panels/                     #   AgentDetailPanel, ProjectOverview, Legend, LiveTimeline
+      CostPanel.tsx             #   Per-agent cost estimation panel
   lib/
     parser/                     # 7 parsers + orchestrator
       agentMapParser.ts         #   CSV and markdown table parsing
@@ -216,7 +225,9 @@ src/
       diffEngine.ts             #   Compare snapshots, produce structured diffs
     types.ts                    #   Full TypeScript type definitions
   store/useProjectStore.ts      # Zustand store with localStorage persistence
-  hooks/useAgentStatus.ts       # Live monitoring polling hook
+  hooks/
+    useAgentStatus.ts           #   Live monitoring polling hook
+    useFileWatcher.ts           #   Auto-sync file change detection hook
 ```
 
 ## Design
@@ -302,4 +313,4 @@ MIT
 
 ## Contributing
 
-Lattice is open source and welcomes contributions. The biggest impact areas right now are framework parser plugins (CrewAI, LangGraph, AutoGen) and export functionality.
+Lattice is open source and welcomes contributions. High-impact areas right now: execution replay, Tauri desktop app, and additional framework parsers.

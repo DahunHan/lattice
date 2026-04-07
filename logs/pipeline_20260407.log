@@ -1,0 +1,21 @@
+[2026-04-07T08:38:40Z] [INFO] === Lattice Growth Harness starting === 2026-04-07T08:38:40Z
+[2026-04-07T08:38:40Z] [INFO] --- Phase 1: Dogfood Tester ---
+[2026-04-07T08:38:40Z] [INFO] Running: dogfood_tester.py (agent: Dogfood Tester)
+[2026-04-07T08:43:40Z] [ERROR] dogfood_tester.py failed: Timed out after 300s
+[2026-04-07T08:43:40Z] [INFO] [dogfood_tester] WARNING: Dogfood Tester failed, continuing pipeline...
+[2026-04-07T08:43:40Z] [INFO] --- Phase 2: Docs Writer + Community Manager (parallel) ---
+[2026-04-07T08:43:40Z] [INFO] Running: docs_writer.py (agent: Docs Writer)
+[2026-04-07T08:45:03Z] [ERROR] docs_writer.py failed: 'NoneType' object has no attribute 'strip'
+[2026-04-07T08:45:03Z] [INFO] [docs_writer] WARNING: Docs Writer failed, continuing pipeline...
+[2026-04-07T08:45:03Z] [INFO] Running: community_manager.py (agent: Community Manager)
+[2026-04-07T08:46:37Z] [ERROR] community_manager.py failed: 'NoneType' object has no attribute 'strip'
+[2026-04-07T08:46:37Z] [INFO] [community_manager] WARNING: Community Manager failed, continuing pipeline...
+[2026-04-07T08:46:37Z] [INFO] --- Phase 3: Content Creator ---
+[2026-04-07T08:46:37Z] [INFO] Running: content_creator.py (agent: Content Creator)
+[2026-04-07T08:47:51Z] [ERROR] content_creator.py failed: 'NoneType' object has no attribute 'strip'
+[2026-04-07T08:47:51Z] [INFO] [content_creator] WARNING: Content Creator failed, continuing pipeline...
+[2026-04-07T08:47:51Z] [INFO] --- Phase 4: Growth Tracker ---
+[2026-04-07T08:47:51Z] [INFO] Running: growth_tracker.py (agent: Growth Tracker)
+[2026-04-07T08:49:35Z] [ERROR] growth_tracker.py failed: 'NoneType' object has no attribute 'strip'
+[2026-04-07T08:49:35Z] [INFO] [growth_tracker] WARNING: Growth Tracker failed, continuing pipeline...
+[2026-04-07T08:49:35Z] [INFO] Pipeline complete

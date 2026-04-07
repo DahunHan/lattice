@@ -14,6 +14,7 @@ import { LiveTimeline } from "@/components/panels/LiveTimeline";
 import { MonitoringToggle } from "@/components/panels/MonitoringToggle";
 import { ExportMenu } from "@/components/graph/ExportMenu";
 import { SnapshotPanel } from "@/components/panels/SnapshotPanel";
+import { LogSettings } from "@/components/panels/LogSettings";
 import { CostPanel } from "@/components/panels/CostPanel";
 import { useFileWatcher } from "@/hooks/useFileWatcher";
 import { parseProject } from "@/lib/parser";
@@ -70,10 +71,15 @@ export default function GraphPage() {
   // If project exists (from setProject), we don't need to wait for hydration
   const ready = !!project;
 
+  const logDir = useProjectStore((s) => s.logDir);
+  const logPattern = useProjectStore((s) => s.logPattern);
+
   // Live monitoring hook
   const { status, isPolling, lastUpdated } = useAgentStatus({
     projectPath,
     enabled: monitoringEnabled,
+    logDir,
+    logPattern,
   });
 
   // Sync status to store, clear resolved IDs on new pipeline run
@@ -233,9 +239,12 @@ export default function GraphPage() {
         <div className="flex items-center gap-3">
           {/* Export menu */}
           <ExportMenu project={project} graphElement={graphElementRef.current} />
-          {/* Live monitoring toggle */}
+          {/* Live monitoring toggle + settings */}
           {projectPath && (
-            <MonitoringToggle />
+            <div className="flex items-center gap-1">
+              <MonitoringToggle />
+              <LogSettings />
+            </div>
           )}
           <span className="text-[10px] text-[#7777A0]">
             {project.agents.length} agents &middot; {project.edges.length} connections

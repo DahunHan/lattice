@@ -16,6 +16,18 @@ Built by a 5-agent harness:
 
 Workflow: Architect -> Frontend Dev -> (Design Reviewer + Code Reviewer in parallel) -> QA Tester
 
+### Growth Harness (open source ops)
+
+| Agent | Role |
+|-------|------|
+| dogfood-tester | Tests Lattice against real open source agent projects, reports bugs |
+| docs-writer | Maintains README, guides, changelogs, onboarding content |
+| content-creator | Writes launch posts, Twitter threads, Reddit posts, dev.to articles |
+| community-manager | Triages GitHub issues, manages PRs, tracks community health |
+| growth-tracker | Monitors npm downloads, GitHub stars, generates weekly growth reports |
+
+Workflow: Dogfood Tester -> (Docs Writer + Community Manager in parallel) -> Content Creator -> Growth Tracker
+
 ## 3. Technical Stack
 - **Framework:** Next.js 14+ (App Router)
 - **Language:** TypeScript (strict, no `any`)

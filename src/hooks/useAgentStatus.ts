@@ -9,6 +9,8 @@ const POLL_INTERVAL_ACTIVE_MS = 3000; // 3 seconds when pipeline is running
 interface UseAgentStatusOptions {
   projectPath: string | null;
   enabled?: boolean;
+  logDir?: string | null;
+  logPattern?: string | null;
 }
 
 interface UseAgentStatusResult {
@@ -19,7 +21,7 @@ interface UseAgentStatusResult {
   refresh: () => void;
 }
 
-export function useAgentStatus({ projectPath, enabled = true }: UseAgentStatusOptions): UseAgentStatusResult {
+export function useAgentStatus({ projectPath, enabled = true, logDir, logPattern }: UseAgentStatusOptions): UseAgentStatusResult {
   const [status, setStatus] = useState<PipelineStatus | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,10 +32,14 @@ export function useAgentStatus({ projectPath, enabled = true }: UseAgentStatusOp
     if (!projectPath) return;
 
     try {
+      const body: Record<string, string> = { path: projectPath };
+      if (logDir) body.logDir = logDir;
+      if (logPattern) body.logPattern = logPattern;
+
       const res = await fetch('/api/status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: projectPath }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -49,7 +55,7 @@ export function useAgentStatus({ projectPath, enabled = true }: UseAgentStatusOp
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Network error');
     }
-  }, [projectPath]);
+  }, [projectPath, logDir, logPattern]);
 
   // Initial fetch and polling setup
   useEffect(() => {

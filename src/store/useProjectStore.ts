@@ -27,6 +27,9 @@ interface ProjectStore {
   toggleMonitoring: () => void;
   pipelineStatus: PipelineStatus | null;
   setPipelineStatus: (status: PipelineStatus | null) => void;
+  logDir: string | null;
+  logPattern: string | null;
+  setLogConfig: (logDir: string | null, logPattern: string | null) => void;
 
   // Snapshots
   snapshots: Snapshot[];
@@ -86,6 +89,9 @@ export const useProjectStore = create<ProjectStore>()(
       toggleMonitoring: () => set((s) => ({ monitoringEnabled: !s.monitoringEnabled })),
       pipelineStatus: null,
       setPipelineStatus: (status) => set({ pipelineStatus: status }),
+      logDir: null,
+      logPattern: null,
+      setLogConfig: (logDir, logPattern) => set({ logDir, logPattern }),
 
       // Snapshots
       snapshots: [],
@@ -185,6 +191,8 @@ export const useProjectStore = create<ProjectStore>()(
         showArchived: state.showArchived,
         pausedAgentIds: state.pausedAgentIds,
         monitoringEnabled: state.monitoringEnabled,
+        logDir: state.logDir,
+        logPattern: state.logPattern,
         snapshots: state.snapshots,
         manualEdges: state.manualEdges,
         agentNotes: state.agentNotes,

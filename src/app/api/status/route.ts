@@ -99,19 +99,39 @@ function buildAgentStatuses(logs: LogEntry[]): Record<string, LiveAgentStatus> {
   return statuses;
 }
 
-async function findTodayLog(logsDir: string): Promise<string | null> {
+async function findLatestLog(logsDir: string, pattern?: string): Promise<string | null> {
   if (!existsSync(logsDir)) return null;
 
   try {
     const files = await readdir(logsDir);
-    // Find pipeline log files, sort by name descending (most recent date first)
-    const pipelineLogs = files
-      .filter(f => f.startsWith('pipeline_') && f.endsWith('.log'))
-      .sort()
-      .reverse();
 
-    if (pipelineLogs.length === 0) return null;
-    return join(logsDir, pipelineLogs[0]);
+    // If a custom pattern is provided, use it; otherwise try common patterns
+    let logFiles: string[];
+
+    if (pattern) {
+      // Custom pattern: e.g., "run_*.log" or "*.jsonl"
+      const regex = new RegExp('^' + pattern.replace(/\*/g, '.*').replace(/\./g, '\\.') + '$', 'i');
+      logFiles = files.filter(f => regex.test(f));
+    } else {
+      // Auto-detect: try common log patterns in order of specificity
+      logFiles = files.filter(f => f.startsWith('pipeline_') && f.endsWith('.log'));
+
+      if (logFiles.length === 0) {
+        logFiles = files.filter(f => f.startsWith('run_') && f.endsWith('.log'));
+      }
+      if (logFiles.length === 0) {
+        logFiles = files.filter(f => f.endsWith('.log') && !f.startsWith('.'));
+      }
+      if (logFiles.length === 0) {
+        logFiles = files.filter(f => f.endsWith('.jsonl'));
+      }
+    }
+
+    if (logFiles.length === 0) return null;
+
+    // Sort by name descending (most recent date-stamped file first)
+    logFiles.sort().reverse();
+    return join(logsDir, logFiles[0]);
   } catch {
     return null;
   }
@@ -130,6 +150,8 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const projectPath = body.path;
+    const customLogDir: string | undefined = body.logDir;
+    const customLogPattern: string | undefined = body.logPattern;
 
     if (!projectPath || typeof projectPath !== 'string') {
       return NextResponse.json({ error: 'Path is required' }, { status: 400 });
@@ -152,8 +174,25 @@ export async function POST(req: NextRequest) {
 
     // Use the original path on Windows (resolve can mangle forward-slash paths)
     const basePath = existsSync(projectPath) ? projectPath : resolvedPath;
-    const logsDir = join(basePath, 'logs');
-    const stateFile = join(logsDir, 'pipeline_state.json');
+
+    // Resolve log directory: custom path > auto-discover > default 'logs'
+    const logDirName = customLogDir ?? 'logs';
+    const logsDir = join(basePath, logDirName);
+
+    // If custom dir doesn't exist, try auto-discovering
+    let effectiveLogsDir = logsDir;
+    if (!existsSync(logsDir) && !customLogDir) {
+      const candidates = ['logs', 'log', 'output', 'runs', '.logs', 'pipeline_logs'];
+      for (const candidate of candidates) {
+        const candidatePath = join(basePath, candidate);
+        if (existsSync(candidatePath)) {
+          effectiveLogsDir = candidatePath;
+          break;
+        }
+      }
+    }
+
+    const stateFile = join(effectiveLogsDir, 'pipeline_state.json');
 
     // Read pipeline state
     let pipelineState: Record<string, unknown> = {};
@@ -165,7 +204,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Read most recent pipeline log
-    const logFile = await findTodayLog(logsDir);
+    const logFile = await findLatestLog(effectiveLogsDir, customLogPattern);
     const logs: LogEntry[] = [];
 
     if (logFile) {
