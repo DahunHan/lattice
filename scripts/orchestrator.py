@@ -234,10 +234,10 @@ Be thorough but concise. Complete the task and report what you did."""
     try:
         # Run via Claude Code CLI
         result = subprocess.run(
-            ["claude", "--print", "--dangerously-skip-permissions", "-p", prompt],
+            ["claude", "--print", "-p", prompt],
             capture_output=True,
             text=True,
-            timeout=300,  # 5 minute timeout per agent
+            timeout=600,  # 10 minute timeout per agent
             cwd=str(PROJECT_ROOT),
         )
 
@@ -245,15 +245,15 @@ Be thorough but concise. Complete the task and report what you did."""
 
         if result.returncode == 0:
             # Log a summary of what the agent produced
-            output = result.stdout.strip()
+            output = (result.stdout or '').strip()
             if output:
-                # Take first 200 chars as summary
                 summary = output[:200].replace("\n", " ")
                 logger.agent_output(agent_id, summary)
             logger.agent_success(agent_id, duration)
             return True
         else:
-            error = result.stderr.strip()[:200] if result.stderr else f"Exit code {result.returncode}"
+            stderr = (result.stderr or '').strip()
+            error = stderr[:200] if stderr else f"Exit code {result.returncode}"
             logger.agent_failed(agent_id, error)
             return False
 
