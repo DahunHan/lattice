@@ -10,7 +10,7 @@ export type AgentRole =
   | 'tracker'
   | 'custom';
 
-export type ModelFamily = 'haiku' | 'sonnet' | 'opus' | 'gemini' | 'python' | 'unknown';
+export type ModelFamily = 'haiku' | 'sonnet' | 'opus' | 'gpt' | 'o-series' | 'gemini' | 'llama' | 'mistral' | 'deepseek' | 'python' | 'unknown';
 
 export interface Agent {
   id: string;
@@ -29,6 +29,7 @@ export interface Agent {
   schedule: string | null;
   tags: string[];
   sourceFile: string | null;
+  group: string | null;
 }
 
 // ── Relationships ───────────────────────────────────────────────────────────

@@ -13,7 +13,12 @@ function classifyModel(model: string): ModelFamily {
   if (m.includes('haiku')) return 'haiku';
   if (m.includes('sonnet')) return 'sonnet';
   if (m.includes('opus')) return 'opus';
+  if (/\b(o1|o3|o4)\b/.test(m)) return 'o-series';
+  if (m.includes('gpt-') || m.includes('gpt4') || m.includes('chatgpt')) return 'gpt';
   if (m.includes('gemini')) return 'gemini';
+  if (m.includes('llama') || m.includes('meta-llama')) return 'llama';
+  if (m.includes('mistral') || m.includes('mixtral')) return 'mistral';
+  if (m.includes('deepseek')) return 'deepseek';
   if (m.includes('python') || m.includes('no llm') || m.includes('n/a')) return 'python';
   return 'unknown';
 }
@@ -100,6 +105,7 @@ export function parseAgentMap(content: string, filename: string): Agent[] {
       const skillFile = (row['Skill File'] || row['Skill'] || '').trim() || null;
       const script = (row['Script'] || row['File'] || '').trim() || null;
       const status = (row['Status'] || 'Active').trim();
+      const group = (row['Team'] || row['Group'] || row['Harness'] || '').trim() || null;
 
       return {
         id: slugify(name),
@@ -118,6 +124,7 @@ export function parseAgentMap(content: string, filename: string): Agent[] {
         schedule: null,
         tags: [],
         sourceFile: null,
+        group,
       };
     });
 }

@@ -1,12 +1,17 @@
 import type { ModelFamily } from '../types';
 
 export const MODEL_COLORS: Record<ModelFamily, { bg: string; border: string; glow: string; text: string }> = {
-  haiku:   { bg: '#0A2A4A', border: '#4A9EE0', glow: 'rgba(74, 158, 224, 0.25)', text: '#4A9EE0' },
-  sonnet:  { bg: '#0A3A2A', border: '#2ECC71', glow: 'rgba(46, 204, 113, 0.25)', text: '#2ECC71' },
-  opus:    { bg: '#2A1A3A', border: '#9B59B6', glow: 'rgba(155, 89, 182, 0.25)', text: '#9B59B6' },
-  gemini:  { bg: '#2A2A1A', border: '#F1C40F', glow: 'rgba(241, 196, 15, 0.25)', text: '#F1C40F' },
-  python:  { bg: '#1A1A2A', border: '#7F8C8D', glow: 'rgba(127, 140, 141, 0.25)', text: '#7F8C8D' },
-  unknown: { bg: '#1A1A2A', border: '#95A5A6', glow: 'rgba(149, 165, 166, 0.25)', text: '#95A5A6' },
+  haiku:    { bg: '#0A2A4A', border: '#4A9EE0', glow: 'rgba(74, 158, 224, 0.25)', text: '#4A9EE0' },
+  sonnet:   { bg: '#0A3A2A', border: '#2ECC71', glow: 'rgba(46, 204, 113, 0.25)', text: '#2ECC71' },
+  opus:     { bg: '#2A1A3A', border: '#9B59B6', glow: 'rgba(155, 89, 182, 0.25)', text: '#9B59B6' },
+  gpt:      { bg: '#0A2A2A', border: '#1ABC9C', glow: 'rgba(26, 188, 156, 0.25)', text: '#1ABC9C' },
+  'o-series': { bg: '#0A2A30', border: '#00BCD4', glow: 'rgba(0, 188, 212, 0.25)', text: '#00BCD4' },
+  gemini:   { bg: '#2A2A1A', border: '#F1C40F', glow: 'rgba(241, 196, 15, 0.25)', text: '#F1C40F' },
+  llama:    { bg: '#2A1A0A', border: '#E67E22', glow: 'rgba(230, 126, 34, 0.25)', text: '#E67E22' },
+  mistral:  { bg: '#2A0A1A', border: '#E74C3C', glow: 'rgba(231, 76, 60, 0.25)', text: '#E74C3C' },
+  deepseek: { bg: '#0A1A2A', border: '#3498DB', glow: 'rgba(52, 152, 219, 0.25)', text: '#3498DB' },
+  python:   { bg: '#1A1A2A', border: '#7F8C8D', glow: 'rgba(127, 140, 141, 0.25)', text: '#7F8C8D' },
+  unknown:  { bg: '#1A1A2A', border: '#95A5A6', glow: 'rgba(149, 165, 166, 0.25)', text: '#95A5A6' },
 };
 
 export const ORCHESTRATOR_COLORS = {

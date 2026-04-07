@@ -8,7 +8,11 @@ const items = [
   { label: "Haiku", color: MODEL_COLORS.haiku.border },
   { label: "Sonnet", color: MODEL_COLORS.sonnet.border },
   { label: "Opus", color: MODEL_COLORS.opus.border },
+  { label: "GPT", color: MODEL_COLORS.gpt.border },
+  { label: "o-series", color: MODEL_COLORS['o-series'].border },
   { label: "Gemini", color: MODEL_COLORS.gemini.border },
+  { label: "Llama", color: MODEL_COLORS.llama.border },
+  { label: "Mistral", color: MODEL_COLORS.mistral.border },
   { label: "Python", color: MODEL_COLORS.python.border },
 ];
 

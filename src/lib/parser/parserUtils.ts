@@ -14,10 +14,22 @@ export function escapeRegex(str: string): string {
 
 export function classifyModelGeneric(model: string): ModelFamily {
   const m = model.toLowerCase();
+  // Anthropic
   if (m.includes('haiku')) return 'haiku';
   if (m.includes('sonnet')) return 'sonnet';
   if (m.includes('opus')) return 'opus';
+  // OpenAI
+  if (/\b(o1|o3|o4)\b/.test(m)) return 'o-series';
+  if (m.includes('gpt-') || m.includes('gpt4') || m.includes('chatgpt')) return 'gpt';
+  // Google
   if (m.includes('gemini')) return 'gemini';
+  // Meta
+  if (m.includes('llama') || m.includes('meta-llama')) return 'llama';
+  // Mistral
+  if (m.includes('mistral') || m.includes('mixtral')) return 'mistral';
+  // Deepseek
+  if (m.includes('deepseek')) return 'deepseek';
+  // Non-LLM
   if (m.includes('python') || m.includes('no llm') || m.includes('n/a')) return 'python';
   return 'unknown';
 }

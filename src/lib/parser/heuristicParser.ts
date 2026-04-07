@@ -148,5 +148,6 @@ function createAgent(name: string, role: string): Agent {
     schedule: null,
     tags: [],
     sourceFile: null,
+        group: null,
   };
 }

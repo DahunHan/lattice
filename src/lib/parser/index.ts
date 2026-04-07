@@ -250,6 +250,7 @@ function mergeAgents(existing: Agent[], incoming: Agent[]): Agent[] {
         role: ex.role || a.role,
         tags: [...new Set([...ex.tags, ...a.tags])],
         sourceFile: ex.sourceFile ?? a.sourceFile,
+        group: ex.group ?? a.group,
       });
     }
   }

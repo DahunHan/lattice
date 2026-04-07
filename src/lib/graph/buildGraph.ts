@@ -30,6 +30,45 @@ export function buildFlowGraph(
   // Compute layout
   const positions = computeLayout(visibleAgents, visibleEdges);
 
+  // Detect groups and compute group bounding boxes
+  const groups = new Map<string, { agents: typeof visibleAgents; minX: number; minY: number; maxX: number; maxY: number }>();
+  for (const agent of visibleAgents) {
+    if (!agent.group) continue;
+    const pos = positions.get(agent.id) ?? { x: 0, y: 0 };
+    const existing = groups.get(agent.group);
+    if (existing) {
+      existing.agents.push(agent);
+      existing.minX = Math.min(existing.minX, pos.x);
+      existing.minY = Math.min(existing.minY, pos.y);
+      existing.maxX = Math.max(existing.maxX, pos.x);
+      existing.maxY = Math.max(existing.maxY, pos.y);
+    } else {
+      groups.set(agent.group, { agents: [agent], minX: pos.x, minY: pos.y, maxX: pos.x, maxY: pos.y });
+    }
+  }
+
+  // Build group background nodes (rendered behind agent nodes)
+  const groupNodes: Node[] = [];
+  for (const [groupName, group] of groups) {
+    if (group.agents.length < 2) continue; // Only show group for 2+ agents
+    const padding = 60;
+    const nodeWidth = 220;
+    const nodeHeight = 100;
+    groupNodes.push({
+      id: `group_${groupName}`,
+      type: 'group',
+      position: { x: group.minX - padding, y: group.minY - padding },
+      style: {
+        width: group.maxX - group.minX + nodeWidth + padding * 2,
+        height: group.maxY - group.minY + nodeHeight + padding * 2,
+        background: 'rgba(245, 166, 35, 0.03)',
+        border: '1px solid rgba(245, 166, 35, 0.08)',
+        borderRadius: '16px',
+      },
+      data: { label: groupName },
+    });
+  }
+
   // Build React Flow nodes
   const nodes: Node<AgentNodeData>[] = visibleAgents.map((agent) => {
     const pos = positions.get(agent.id) ?? { x: 0, y: 0 };
@@ -49,6 +88,9 @@ export function buildFlowGraph(
     };
   });
 
+  // Group nodes go first (rendered behind)
+  const allNodes = [...groupNodes, ...nodes] as Node<AgentNodeData>[];
+
   // Build React Flow edges
   const edges: Edge[] = visibleEdges.map((e) => ({
     id: e.id,
@@ -60,5 +102,5 @@ export function buildFlowGraph(
     data: { edgeType: e.type },
   }));
 
-  return { nodes, edges };
+  return { nodes: allNodes, edges };
 }

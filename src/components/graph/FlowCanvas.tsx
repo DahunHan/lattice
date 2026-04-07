@@ -17,6 +17,7 @@ import "@xyflow/react/dist/style.css";
 
 import { AgentNode } from "./nodes/AgentNode";
 import { OrchestratorNode } from "./nodes/OrchestratorNode";
+import { GroupNode } from "./nodes/GroupNode";
 import { PipelineEdge } from "./edges/PipelineEdge";
 import { SupervisionEdge } from "./edges/SupervisionEdge";
 import { DataFlowEdge } from "./edges/DataFlowEdge";
@@ -27,6 +28,7 @@ const nodeTypes = {
   agent: AgentNode,
   orchestrator: OrchestratorNode,
   archived: AgentNode,
+  group: GroupNode,
 };
 
 const edgeTypes = {
