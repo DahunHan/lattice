@@ -1,5 +1,3 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
 /node_modules
 /.pnp
@@ -9,6 +7,7 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+vscode-extension/node_modules
 
 # testing
 /coverage
@@ -30,16 +29,24 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env and secrets
 .env*
 .npmrc
 
 # vercel
 .vercel
 
-# harness workspace artifacts
+# harness workspace artifacts (runtime output, not source)
 _workspace/
 
-# typescript
+# pipeline logs (runtime data, regenerated each run)
+logs/*.log
+logs/pipeline_state.json
+
+# typescript build artifacts
 *.tsbuildinfo
 next-env.d.ts
+
+# OS files
+Thumbs.db
+Desktop.ini
