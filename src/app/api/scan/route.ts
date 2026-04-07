@@ -10,6 +10,9 @@ const IGNORE_DIRS = new Set([
   '_workspace', 'coverage', '.turbo',
   // Content directories — not agent definitions
   'drafts', 'logs', 'output', 'outputs', 'data', 'tmp', 'temp',
+  // Documentation directories — never contain agent definitions
+  'docs', 'doc', 'documentation', 'wiki', 'guides', 'tutorials',
+  'examples/docs', 'site',
 ]);
 
 const MAX_DEPTH = 6;

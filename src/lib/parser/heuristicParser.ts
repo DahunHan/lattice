@@ -92,7 +92,25 @@ export function detectEdgesHeuristic(content: string, knownAgentIds: Set<string>
   return edges;
 }
 
+// Common doc headings and generic words that should NOT be detected as agents
+const EXCLUDE_NAMES = new Set([
+  'customize', 'customize further', 'getting started', 'installation',
+  'quick start', 'overview', 'introduction', 'usage', 'configuration',
+  'multi agent', 'multi-agent', 'agent as tool', 'streaming', 'about',
+  'features', 'setup', 'contributing', 'license', 'changelog',
+  'api reference', 'examples', 'faq', 'troubleshooting',
+]);
+
 function isAgentLike(name: string, context: string): boolean {
+  const nameLower = name.toLowerCase().trim();
+
+  // Reject common doc headings
+  if (EXCLUDE_NAMES.has(nameLower)) return false;
+
+  // Reject very short or generic names
+  if (nameLower.length < 3) return false;
+  if (/^(the|a|an|this|that|how|why|what|when)\s/i.test(name)) return false;
+
   const combined = `${name} ${context}`.toLowerCase();
   const agentKeywords = ['agent', 'bot', 'worker', 'processor', 'handler', 'orchestrat', 'reviewer', 'tracker', 'publisher', 'analyzer', 'monitor'];
   return agentKeywords.some(kw => combined.includes(kw));

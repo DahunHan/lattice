@@ -163,5 +163,27 @@ function extractYamlValue(body: string, key: string): string | null {
   const regex = new RegExp(`^\\s*${key}\\s*:\\s*(?:"([^"]*?)"|'([^']*?)'|(.+?)$)`, 'im');
   const m = body.match(regex);
   if (!m) return null;
-  return (m[1] ?? m[2] ?? m[3] ?? '').trim() || null;
+  const raw = (m[1] ?? m[2] ?? m[3] ?? '').trim();
+
+  // Handle YAML multiline indicators: > (folded) or | (literal)
+  if (raw === '>' || raw === '|') {
+    // Read subsequent indented lines as the value
+    const lines = body.split('\n');
+    const keyIdx = lines.findIndex(l => new RegExp(`^\\s*${key}\\s*:`, 'i').test(l));
+    if (keyIdx === -1) return null;
+    const valueParts: string[] = [];
+    for (let i = keyIdx + 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (/^\s+\S/.test(line)) {
+        valueParts.push(line.trim());
+      } else if (line.trim() === '') {
+        valueParts.push('');
+      } else {
+        break;
+      }
+    }
+    return valueParts.join(' ').trim() || null;
+  }
+
+  return raw || null;
 }

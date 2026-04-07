@@ -1,0 +1,21 @@
+# Dev and test files
+src/lib/parser/__tests__/
+src/lib/snapshot/__tests__/
+_workspace/
+vscode-extension/
+examples/
+.claude/
+.github/
+scripts/
+
+# Config files not needed at runtime
+CLAUDE.md
+AGENT_MAP.md
+AGENTS.md
+vitest.config.ts
+eslint.config.mjs
+
+# Build artifacts and caches
+.next/cache/
+coverage/
+*.tsbuildinfo

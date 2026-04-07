@@ -3,10 +3,22 @@ import { parseFrontmatter } from './markdownUtils';
 
 /** Check if content looks like a SKILL.md agent definition */
 export function isSkillFile(content: string, filename: string): boolean {
-  const nameMatch = /skill\.md$/i.test(filename);
-  const hasFrontmatter = /^---\s*\n[\s\S]*?\n---/.test(content);
-  const hasAgentKeywords = /(?:agent|role|responsibilit|you are)/i.test(content);
-  return nameMatch || (hasFrontmatter && hasAgentKeywords);
+  // Strong signal: filename ends with skill.md
+  if (/skill\.md$/i.test(filename)) return true;
+
+  // Strong signal: path contains skills/ or .agents/
+  const path = filename.replace(/\\/g, '/').toLowerCase();
+  const isInSkillDir = path.includes('/skills/') || path.includes('/.agents/');
+
+  // Weak signal alone is NOT enough — require path context
+  // This prevents docs with frontmatter + "agent" keyword from being misclassified
+  if (isInSkillDir) {
+    const hasFrontmatter = /^---\s*\n[\s\S]*?\n---/.test(content);
+    const hasAgentKeywords = /(?:agent|role|responsibilit|you are)/i.test(content);
+    return hasFrontmatter && hasAgentKeywords;
+  }
+
+  return false;
 }
 
 /** Extract agent enrichment data from SKILL.md files */

@@ -21,6 +21,14 @@ from pathlib import Path
 # ── Config ────────────────────────────────────────────────────────────────────
 
 PROJECT_ROOT = Path(__file__).parent.parent
+
+def get_version() -> str:
+    """Read current version from package.json."""
+    try:
+        pkg = json.loads((PROJECT_ROOT / "package.json").read_text(encoding="utf-8"))
+        return pkg.get("version", "unknown")
+    except Exception:
+        return "unknown"
 LOGS_DIR = PROJECT_ROOT / "logs"
 WORKSPACE_DIR = PROJECT_ROOT / "_workspace"
 AGENTS_DIR = PROJECT_ROOT / ".claude" / "agents"
@@ -83,7 +91,7 @@ TEAM_GROWTH = {
             "id": "docs_writer",
             "name": "Docs Writer",
             "file": "docs-writer.md",
-            "task": "Update README with latest features, write changelog for current version",
+            "task": f"Update README with latest features, write changelog for current version (v{get_version()})",
             "phase": 2,
             "parallel_group": "ops",
         },
