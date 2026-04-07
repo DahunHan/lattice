@@ -65,15 +65,23 @@ export function parseOpenAIAgents(content: string, filename: string): { agents: 
     });
   }
 
-  // Second pass: extract handoff edges
-  const handoffRegex = /(\w+)\s*=\s*Agent\s*\([^)]*handoffs\s*=\s*\[([^\]]*)\]/g;
+  // Second pass: extract handoff edges using findMatchingParen for multiline Agent() support
+  const agentCallRegex = /(\w+)\s*=\s*Agent\s*\(/g;
   let handoffMatch;
-  while ((handoffMatch = handoffRegex.exec(content)) !== null) {
+  while ((handoffMatch = agentCallRegex.exec(content)) !== null) {
     const srcVar = handoffMatch[1];
     const srcName = varToName.get(srcVar);
     if (!srcName) continue;
 
-    const handoffList = handoffMatch[2];
+    // Get the full constructor body using paren matching
+    const parenStart = (handoffMatch.index ?? 0) + handoffMatch[0].length - 1;
+    const constructorBody = content.slice(parenStart, findMatchingParen(content, parenStart));
+
+    // Check if this Agent has handoffs
+    const handoffsMatch = constructorBody.match(/handoffs\s*=\s*\[([^\]]*)\]/);
+    if (!handoffsMatch) continue;
+
+    const handoffList = handoffsMatch[1];
     // Match variable references and handoff() calls
     const targetRegex = /\b(\w+)\b/g;
     let targetMatch;

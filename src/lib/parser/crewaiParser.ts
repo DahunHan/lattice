@@ -131,14 +131,13 @@ export function parseCrewAITasksYaml(content: string, agents: Agent[]): AgentEdg
   return edges;
 }
 
-/** Parse a CrewAI Python file for process type and agent definitions */
+/** Parse a CrewAI Python file for process type, task-agent mappings, and edges */
 export function parseCrewAIPython(content: string, agents: Agent[]): AgentEdge[] {
   const edges: AgentEdge[] = [];
   const agentIds = new Set(agents.map(a => a.id));
 
   // Detect Process.hierarchical → add supervision edges from manager
   if (/Process\.hierarchical/i.test(content)) {
-    // Find manager_llm or manager_agent references
     const managerMatch = content.match(/manager_agent\s*=\s*(\w+)/);
     const managerId = managerMatch ? slugify(managerMatch[1]) : null;
 
@@ -152,6 +151,36 @@ export function parseCrewAIPython(content: string, agents: Agent[]): AgentEdge[]
             type: 'supervision',
           });
         }
+      }
+    }
+  }
+
+  // Parse @task decorator methods that reference self.<agent_name>()
+  // Pattern: def task_name(self) -> Task: ... agent=self.agent_name()
+  const taskAgentPairs: { taskName: string; agentId: string }[] = [];
+  const taskRegex = /@task[\s\S]*?def\s+(\w+)\s*\(self\)[\s\S]*?agent\s*=\s*self\.(\w+)\s*\(\)/g;
+  let taskMatch;
+  while ((taskMatch = taskRegex.exec(content)) !== null) {
+    const taskName = taskMatch[1];
+    const agentMethodName = taskMatch[2];
+    const agentId = slugify(agentMethodName);
+    if (agentIds.has(agentId)) {
+      taskAgentPairs.push({ taskName, agentId });
+    }
+  }
+
+  // Create sequential pipeline edges from task order (decorator order = execution order)
+  if (taskAgentPairs.length > 1 && edges.length === 0) {
+    for (let i = 0; i < taskAgentPairs.length - 1; i++) {
+      const src = taskAgentPairs[i].agentId;
+      const tgt = taskAgentPairs[i + 1].agentId;
+      if (src !== tgt) {
+        edges.push({
+          id: `${src}->${tgt}:pipeline`,
+          source: src,
+          target: tgt,
+          type: 'pipeline',
+        });
       }
     }
   }

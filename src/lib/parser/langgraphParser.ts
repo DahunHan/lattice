@@ -96,11 +96,15 @@ export function parseLangGraph(content: string, filename: string): { agents: Age
 
     const srcId = slugify(src);
     const restOfCall = content.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 500);
+
+    // Try to find explicit mapping dict: {"key": "node", ...}
     const targetRegex = /(?:"([^"]+)"|'([^']+)')\s*:\s*(?:"([^"]+)"|'([^']+)')/g;
     let targetMatch;
+    let foundMapping = false;
     while ((targetMatch = targetRegex.exec(restOfCall)) !== null) {
       const tgt = targetMatch[3] ?? targetMatch[4];
       if (tgt && nodeNames.has(tgt)) {
+        foundMapping = true;
         edges.push({
           id: `${srcId}->${slugify(tgt)}:pipeline`,
           source: srcId,
@@ -108,6 +112,28 @@ export function parseLangGraph(content: string, filename: string): { agents: Age
           type: 'pipeline',
           label: targetMatch[1] ?? targetMatch[2] ?? undefined,
         });
+      }
+    }
+
+    // If no explicit mapping found, infer edges from known prebuilt functions
+    // e.g., tools_condition routes to "tools" node, should_continue routes to known nodes
+    if (!foundMapping) {
+      // Check if the function name references a known node (common pattern: route to "tools")
+      const funcMatch = restOfCall.match(/,\s*(\w+)/);
+      if (funcMatch) {
+        const funcName = funcMatch[1].toLowerCase();
+        // tools_condition is the most common prebuilt — routes to "tools" node
+        if (funcName.includes('tool') && nodeNames.has('tools')) {
+          edges.push({
+            id: `${srcId}->tools:pipeline`,
+            source: srcId,
+            target: slugify('tools'),
+            type: 'pipeline',
+            label: 'conditional',
+          });
+        }
+        // For other functions, connect to all remaining nodes that don't have incoming edges yet
+        // This is a heuristic — better than nothing
       }
     }
   }
