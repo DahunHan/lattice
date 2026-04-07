@@ -23,13 +23,13 @@ You validate parsers, components, and end-to-end workflows for HailMary. You are
 - Edge generation from pipeline sequence
 
 ### Cross-Reference
-- Next.js output must match Python prototype output for readyit test data
+- Next.js output must match Python prototype output for sample harness test data
 
 ## Reference Data
 
-- `C:\Users\dahun\Documents\Github\readyit\AGENT_MAP.md` — canonical test input
-- `C:\Users\dahun\Documents\Github\readyit\SYSTEM-ARCHITECTURE.MD` — canonical test input
-- `C:\Users\dahun\Documents\Github\HailMary\parser.py` — Python reference
+- `examples/sample-harness/AGENT_MAP.md` — canonical test input
+- `examples/sample-harness/SYSTEM-ARCHITECTURE.md` — canonical test input
+- `../../parser.py` — Python reference (root-level prototype)
 
 ## Artifact Format
 

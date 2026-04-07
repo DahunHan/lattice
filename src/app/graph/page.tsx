@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ReactFlowProvider } from "@xyflow/react";
 import { useProjectStore } from "@/store/useProjectStore";
@@ -22,13 +22,14 @@ export default function GraphPage() {
   const searchQuery = useProjectStore((s) => s.searchQuery);
   const monitoringEnabled = useProjectStore((s) => s.monitoringEnabled);
   const setPipelineStatus = useProjectStore((s) => s.setPipelineStatus);
+  const hasHydrated = useProjectStore((s) => s._hasHydrated);
 
-  // Redirect to landing if no project loaded
+  // Redirect to landing if no project loaded (only after hydration)
   useEffect(() => {
-    if (!project) {
+    if (hasHydrated && !project) {
       router.replace("/");
     }
-  }, [project, router]);
+  }, [hasHydrated, project, router]);
 
   // Live monitoring hook
   const { status, isPolling, lastUpdated } = useAgentStatus({
@@ -63,7 +64,19 @@ export default function GraphPage() {
     return graph;
   }, [project, showArchived, pausedAgentIds, searchQuery, status]);
 
-  if (!project) return null;
+  const [warningDismissed, setWarningDismissed] = useState(false);
+  const warningCount = project?.warnings?.length ?? 0;
+
+  if (!hasHydrated || !project) {
+    return (
+      <div className="h-screen w-screen bg-[#0A0A1B] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#F5A623] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-[#7777A0]">Loading project...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-screen bg-[#0A0A1B] relative overflow-hidden">
@@ -99,8 +112,23 @@ export default function GraphPage() {
         </div>
       </div>
 
+      {/* Parse warnings banner */}
+      {warningCount > 0 && !warningDismissed && (
+        <div className="absolute top-12 left-0 right-0 z-20 px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between">
+          <span className="text-xs text-amber-400">
+            Parsed with {warningCount} warning{warningCount > 1 ? 's' : ''} — some files may not have been fully processed
+          </span>
+          <button
+            onClick={() => setWarningDismissed(true)}
+            className="text-amber-400/60 hover:text-amber-400 transition-colors text-xs ml-4"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Main canvas area */}
-      <div className="absolute inset-0 pt-12" style={{ paddingBottom: monitoringEnabled && status ? '40px' : '0' }}>
+      <div className="absolute inset-0 pt-12" style={{ paddingTop: warningCount > 0 && !warningDismissed ? '80px' : '48px', paddingBottom: monitoringEnabled && status ? '40px' : '0' }}>
         <ReactFlowProvider>
           <FlowCanvas initialNodes={nodes} initialEdges={edges} />
         </ReactFlowProvider>

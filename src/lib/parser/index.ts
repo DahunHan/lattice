@@ -1,4 +1,4 @@
-import type { ProjectData, Agent, AgentEdge, ParsedFile } from '../types';
+import type { ProjectData, Agent, AgentEdge, ParsedFile, ParseWarning } from '../types';
 import { isAgentMap, parseAgentMap } from './agentMapParser';
 import { isArchitectureDoc, parsePipeline, parseEdges } from './architectureParser';
 import { isClaudeMd, parseClaudeMd } from './claudeParser';
@@ -20,6 +20,7 @@ export function parseProject(files: RawFile[]): ProjectData {
   let agents: Agent[] = [];
   let edges: AgentEdge[] = [];
   const parsedFiles: ParsedFile[] = [];
+  const warnings: ParseWarning[] = [];
   const skills: ReturnType<typeof parseSkillFile>[] = [];
   const claudeMdFiles: RawFile[] = [];
   let metadata = { name: '', goal: null as string | null, description: null as string | null };
@@ -37,38 +38,43 @@ export function parseProject(files: RawFile[]): ProjectData {
   for (const file of validFiles) {
     const filePath = file.path ?? file.name;
 
-    // 1. Claude Code agent definitions (.claude/agents/*.md)
-    if (isClaudeAgentFile(file.content, filePath)) {
-      const agent = parseClaudeAgentFile(file.content, filePath);
-      agents = mergeAgents(agents, [agent]);
-      parsedFiles.push({ filename: file.name, path: filePath, type: 'claude-agent' });
-    }
-    // 2. CLAUDE.md project files
-    else if (isClaudeMd(file.content, file.name)) {
-      const partial = parseClaudeMd(file.content, file.name);
-      if (partial.name) metadata.name = partial.name;
-      if (partial.goal) metadata.goal = partial.goal;
-      if (partial.description) metadata.description = partial.description;
-      claudeMdFiles.push(file);
-      parsedFiles.push({ filename: file.name, path: filePath, type: 'claude-md' });
-    }
-    // 3. SKILL.md files (.agents/skills/*/SKILL.md)
-    else if (isSkillFile(file.content, file.name)) {
-      skills.push(parseSkillFile(file.content, filePath));
-      parsedFiles.push({ filename: file.name, path: filePath, type: 'skill' });
-    }
-    // 4. Agent map (CSV or markdown table)
-    else if (isAgentMap(file.content, file.name)) {
-      const parsed = parseAgentMap(file.content, file.name);
-      agents = mergeAgents(agents, parsed);
-      parsedFiles.push({ filename: file.name, path: filePath, type: 'agent-map' });
-    }
-    // 5. Architecture docs
-    else if (isArchitectureDoc(file.content, file.name)) {
-      parsedFiles.push({ filename: file.name, path: filePath, type: 'architecture' });
-    }
-    // 6. Unmatched — will try heuristic later
-    else {
+    try {
+      // 1. Claude Code agent definitions (.claude/agents/*.md)
+      if (isClaudeAgentFile(file.content, filePath)) {
+        const agent = parseClaudeAgentFile(file.content, filePath);
+        agents = mergeAgents(agents, [agent]);
+        parsedFiles.push({ filename: file.name, path: filePath, type: 'claude-agent' });
+      }
+      // 2. CLAUDE.md project files
+      else if (isClaudeMd(file.content, file.name)) {
+        const partial = parseClaudeMd(file.content, file.name);
+        if (partial.name) metadata.name = partial.name;
+        if (partial.goal) metadata.goal = partial.goal;
+        if (partial.description) metadata.description = partial.description;
+        claudeMdFiles.push(file);
+        parsedFiles.push({ filename: file.name, path: filePath, type: 'claude-md' });
+      }
+      // 3. SKILL.md files (.agents/skills/*/SKILL.md)
+      else if (isSkillFile(file.content, file.name)) {
+        skills.push(parseSkillFile(file.content, filePath));
+        parsedFiles.push({ filename: file.name, path: filePath, type: 'skill' });
+      }
+      // 4. Agent map (CSV or markdown table)
+      else if (isAgentMap(file.content, file.name)) {
+        const parsed = parseAgentMap(file.content, file.name);
+        agents = mergeAgents(agents, parsed);
+        parsedFiles.push({ filename: file.name, path: filePath, type: 'agent-map' });
+      }
+      // 5. Architecture docs
+      else if (isArchitectureDoc(file.content, file.name)) {
+        parsedFiles.push({ filename: file.name, path: filePath, type: 'architecture' });
+      }
+      // 6. Unmatched — will try heuristic later
+      else {
+        unmatched.push(file);
+      }
+    } catch (e) {
+      warnings.push({ file: filePath, parser: 'classify', message: String(e) });
       unmatched.push(file);
     }
   }
@@ -78,41 +84,65 @@ export function parseProject(files: RawFile[]): ProjectData {
     parsedFiles.some(pf => pf.path === (f.path ?? f.name) && pf.type === 'architecture')
   );
 
-  const pipeline = archFiles.length > 0
-    ? parsePipeline(archFiles.map(f => f.content).join('\n\n'), agents)
-    : [];
+  let pipeline: ReturnType<typeof parsePipeline> = [];
+  try {
+    pipeline = archFiles.length > 0
+      ? parsePipeline(archFiles.map(f => f.content).join('\n\n'), agents)
+      : [];
+  } catch (e) {
+    warnings.push({ file: 'architecture', parser: 'pipeline', message: String(e) });
+  }
 
-  const archEdges = archFiles.length > 0
-    ? parseEdges(archFiles.map(f => f.content).join('\n\n'), agents, pipeline)
-    : [];
-
-  edges = mergeEdges(edges, archEdges);
+  try {
+    const archEdges = archFiles.length > 0
+      ? parseEdges(archFiles.map(f => f.content).join('\n\n'), agents, pipeline)
+      : [];
+    edges = mergeEdges(edges, archEdges);
+  } catch (e) {
+    warnings.push({ file: 'architecture', parser: 'edges', message: String(e) });
+  }
 
   // Parse orchestration tables from CLAUDE.md files
   for (const claudeFile of claudeMdFiles) {
-    const orchEdges = parseOrchestrationTable(claudeFile.content, agents);
-    edges = mergeEdges(edges, orchEdges);
+    try {
+      const orchEdges = parseOrchestrationTable(claudeFile.content, agents);
+      edges = mergeEdges(edges, orchEdges);
+    } catch (e) {
+      warnings.push({ file: claudeFile.name, parser: 'orchestration', message: String(e) });
+    }
   }
 
   // Enrich agents with skill data
   if (skills.length > 0) {
-    agents = enrichAgentsWithSkills(agents, skills);
+    try {
+      agents = enrichAgentsWithSkills(agents, skills);
+    } catch (e) {
+      warnings.push({ file: 'skills', parser: 'enrichment', message: String(e) });
+    }
   }
 
   // Heuristic parsing on unmatched files
   for (const file of unmatched) {
-    const heuristicAgents = detectAgentsHeuristic(file.content, file.name);
-    if (heuristicAgents.length > 0) {
-      agents = mergeAgents(agents, heuristicAgents);
-      parsedFiles.push({ filename: file.name, path: file.path ?? file.name, type: 'generic' });
+    try {
+      const heuristicAgents = detectAgentsHeuristic(file.content, file.name);
+      if (heuristicAgents.length > 0) {
+        agents = mergeAgents(agents, heuristicAgents);
+        parsedFiles.push({ filename: file.name, path: file.path ?? file.name, type: 'generic' });
+      }
+    } catch (e) {
+      warnings.push({ file: file.name, parser: 'heuristic', message: String(e) });
     }
   }
 
   // Heuristic edges (using all agent IDs)
   const agentIdSet = new Set(agents.map(a => a.id));
   for (const file of unmatched) {
-    const heuristicEdges = detectEdgesHeuristic(file.content, agentIdSet);
-    edges = mergeEdges(edges, heuristicEdges);
+    try {
+      const heuristicEdges = detectEdgesHeuristic(file.content, agentIdSet);
+      edges = mergeEdges(edges, heuristicEdges);
+    } catch (e) {
+      warnings.push({ file: file.name, parser: 'heuristic-edges', message: String(e) });
+    }
   }
 
   // Assign pipeline phases to agents
@@ -136,6 +166,7 @@ export function parseProject(files: RawFile[]): ProjectData {
     edges,
     pipeline,
     rawFiles: parsedFiles,
+    warnings,
   };
 }
 

@@ -9,6 +9,8 @@ import { useProjectStore } from "@/store/useProjectStore";
 export default function LandingPage() {
   const router = useRouter();
   const setProject = useProjectStore((s) => s.setProject);
+  const existingProject = useProjectStore((s) => s.project);
+  const hasHydrated = useProjectStore((s) => s._hasHydrated);
   const [folderPath, setFolderPath] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -270,6 +272,9 @@ export default function LandingPage() {
             </button>
           </div>
 
+          {/* Supported formats — collapsible */}
+          <FormatHints showInitially={false} />
+
           {/* Error / Status */}
           <AnimatePresence>
             {error && (
@@ -295,6 +300,46 @@ export default function LandingPage() {
           </AnimatePresence>
         </div>
 
+        {/* Continue with existing project */}
+        {hasHydrated && existingProject && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.4 }}
+            className="mt-6"
+          >
+            <button
+              onClick={() => router.push("/graph")}
+              className="
+                w-full px-5 py-4 rounded-xl text-left
+                glass-strong border border-[#1E1E3A] hover:border-[#F5A623]/30
+                transition-all duration-200 group
+              "
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#F5A623]/10 flex items-center justify-center">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F5A623" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#E0E0F0]">
+                      Continue with {existingProject.metadata.name}
+                    </p>
+                    <p className="text-xs text-[#7777A0]">
+                      {existingProject.agents.length} agents &middot; {existingProject.edges.length} connections
+                    </p>
+                  </div>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7777A0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:stroke-[#F5A623] transition-colors">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </div>
+            </button>
+          </motion.div>
+        )}
+
         {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-xs text-[#7777A0]">
@@ -302,6 +347,53 @@ export default function LandingPage() {
           </p>
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+const FORMATS = [
+  { name: 'AGENT_MAP.md', desc: 'Agent definitions (CSV or markdown table)' },
+  { name: '.claude/agents/*.md', desc: 'Claude Code agent definitions' },
+  { name: 'SYSTEM-ARCHITECTURE.md', desc: 'Pipeline phases & data flow' },
+  { name: 'CLAUDE.md', desc: 'Project metadata & goals' },
+  { name: 'SKILL.md', desc: 'Agent skill instructions' },
+  { name: 'Any .md', desc: 'Heuristic detection of agents & relationships' },
+];
+
+function FormatHints({ showInitially }: { showInitially: boolean }) {
+  const [open, setOpen] = useState(showInitially);
+
+  return (
+    <div className="mt-4">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 text-[11px] text-[#7777A0] hover:text-[#9999BB] transition-colors"
+      >
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+        >
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+        Supported formats
+      </button>
+      {open && (
+        <div className="mt-2 pl-4 space-y-1.5">
+          {FORMATS.map((f) => (
+            <div key={f.name} className="flex items-baseline gap-2">
+              <code className="text-[10px] text-[#F5A623]/70 font-mono whitespace-nowrap">{f.name}</code>
+              <span className="text-[10px] text-[#7777A0]">{f.desc}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

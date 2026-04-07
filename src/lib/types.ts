@@ -67,12 +67,19 @@ export interface ParsedFile {
   type: 'agent-map' | 'architecture' | 'claude-md' | 'skill' | 'claude-agent' | 'generic';
 }
 
+export interface ParseWarning {
+  file: string;
+  parser: string;
+  message: string;
+}
+
 export interface ProjectData {
   metadata: ProjectMetadata;
   agents: Agent[];
   edges: AgentEdge[];
   pipeline: PipelinePhase[];
   rawFiles: ParsedFile[];
+  warnings: ParseWarning[];
 }
 
 // ── React Flow node data ────────────────────────────────────────────────────

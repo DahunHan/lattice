@@ -33,6 +33,9 @@ export function ProjectOverview() {
         <Stat value={pipelineCount} label="Phases" />
         <Stat value={project.edges.length} label="Edges" />
         <Stat value={project.rawFiles.length} label="Files" />
+        {project.warnings.length > 0 && (
+          <Stat value={project.warnings.length} label="Warns" warn />
+        )}
       </div>
 
       {/* Controls */}
@@ -64,10 +67,10 @@ export function ProjectOverview() {
   );
 }
 
-function Stat({ value, label, accent }: { value: number; label: string; accent?: boolean }) {
+function Stat({ value, label, accent, warn }: { value: number; label: string; accent?: boolean; warn?: boolean }) {
   return (
     <div className="text-center">
-      <div className={`text-sm font-bold ${accent ? 'text-[#F5A623]' : 'text-[#E0E0F0]'}`}>{value}</div>
+      <div className={`text-sm font-bold ${warn ? 'text-amber-400' : accent ? 'text-[#F5A623]' : 'text-[#E0E0F0]'}`}>{value}</div>
       <div className="text-[9px] text-[#7777A0] uppercase tracking-wider">{label}</div>
     </div>
   );
