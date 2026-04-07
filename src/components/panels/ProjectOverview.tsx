@@ -28,7 +28,7 @@ export function ProjectOverview() {
       )}
 
       {/* Stats */}
-      <div className="flex gap-4 mb-3">
+      <div className="flex gap-3 mb-3">
         <Stat value={activeCount} label="Agents" accent />
         <Stat value={pipelineCount} label="Phases" />
         <Stat value={project.edges.length} label="Edges" />
@@ -71,7 +71,7 @@ function Stat({ value, label, accent, warn }: { value: number; label: string; ac
   return (
     <div className="text-center">
       <div className={`text-sm font-bold ${warn ? 'text-amber-400' : accent ? 'text-[#F5A623]' : 'text-[#E0E0F0]'}`}>{value}</div>
-      <div className="text-[9px] text-[#7777A0] uppercase tracking-wider">{label}</div>
+      <div className="text-[10px] text-[#9999BB] uppercase tracking-wider">{label}</div>
     </div>
   );
 }

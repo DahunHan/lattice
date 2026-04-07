@@ -84,6 +84,20 @@ export const useProjectStore = create<ProjectStore>()(
         pausedAgentIds: state.pausedAgentIds,
         monitoringEnabled: state.monitoringEnabled,
       }),
+      version: 1,
+      migrate: (persisted, version) => {
+        const state = persisted as Record<string, unknown>;
+        if (version === 0) {
+          // v0 → v1: ensure warnings array exists on project
+          if (state.project && typeof state.project === 'object') {
+            const proj = state.project as Record<string, unknown>;
+            if (!Array.isArray(proj.warnings)) {
+              proj.warnings = [];
+            }
+          }
+        }
+        return state as never;
+      },
       onRehydrateStorage: () => () => {
         useProjectStore.setState({ _hasHydrated: true });
       },

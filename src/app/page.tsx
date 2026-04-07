@@ -384,16 +384,26 @@ function FormatHints({ showInitially }: { showInitially: boolean }) {
         </svg>
         Supported formats
       </button>
-      {open && (
-        <div className="mt-2 pl-4 space-y-1.5">
-          {FORMATS.map((f) => (
-            <div key={f.name} className="flex items-baseline gap-2">
-              <code className="text-[10px] text-[#F5A623]/70 font-mono whitespace-nowrap">{f.name}</code>
-              <span className="text-[10px] text-[#7777A0]">{f.desc}</span>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="overflow-hidden"
+          >
+            <div className="mt-2 pl-4 space-y-1.5">
+              {FORMATS.map((f) => (
+                <div key={f.name} className="flex items-baseline gap-2">
+                  <code className="text-[10px] text-[#F5A623]/70 font-mono whitespace-nowrap">{f.name}</code>
+                  <span className="text-[10px] text-[#9999BB]">{f.desc}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
