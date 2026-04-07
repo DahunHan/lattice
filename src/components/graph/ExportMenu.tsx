@@ -70,7 +70,7 @@ export function ExportMenu({ project, graphElement }: ExportMenuProps) {
             });
             const json = await res.json();
             if (json.success) {
-              console.log('[HailMary] README.md updated:', json.path);
+              console.log('[Lattice] README.md updated:', json.path);
             }
           }
           break;

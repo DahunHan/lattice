@@ -14,6 +14,9 @@ import { LiveTimeline } from "@/components/panels/LiveTimeline";
 import { MonitoringToggle } from "@/components/panels/MonitoringToggle";
 import { ExportMenu } from "@/components/graph/ExportMenu";
 import { SnapshotPanel } from "@/components/panels/SnapshotPanel";
+import { CostPanel } from "@/components/panels/CostPanel";
+import { useFileWatcher } from "@/hooks/useFileWatcher";
+import { parseProject } from "@/lib/parser";
 
 export default function GraphPage() {
   const router = useRouter();
@@ -29,6 +32,33 @@ export default function GraphPage() {
   const manualEdges = useProjectStore((s) => s.manualEdges);
   const addManualEdge = useProjectStore((s) => s.addManualEdge);
   const agentNotes = useProjectStore((s) => s.agentNotes);
+  const resolvedAgentIds = useProjectStore((s) => s.resolvedAgentIds);
+  const clearResolved = useProjectStore((s) => s.clearResolved);
+  const setProject = useProjectStore((s) => s.setProject);
+
+  // Auto-rescan when files change
+  const handleFilesChanged = useCallback(async () => {
+    if (!projectPath) return;
+    try {
+      const res = await fetch('/api/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: projectPath }),
+      });
+      const json = await res.json();
+      if (json.data) {
+        setProject(json.data, projectPath);
+        console.log('[Lattice] Auto-rescan complete');
+      }
+    } catch { /* ignore */ }
+  }, [projectPath, setProject]);
+
+  const { watching } = useFileWatcher({
+    projectPath,
+    enabled: !!projectPath,
+    intervalMs: 5000,
+    onChanged: handleFilesChanged,
+  });
 
   // Redirect to landing if no project loaded (only after hydration completes)
   useEffect(() => {
@@ -46,10 +76,15 @@ export default function GraphPage() {
     enabled: monitoringEnabled,
   });
 
-  // Sync status to store
+  // Sync status to store, clear resolved IDs on new pipeline run
+  const prevDateRef = useRef<string | null>(null);
   useEffect(() => {
     setPipelineStatus(status);
-  }, [status, setPipelineStatus]);
+    if (status?.date && prevDateRef.current && status.date !== prevDateRef.current) {
+      clearResolved();
+    }
+    if (status?.date) prevDateRef.current = status.date;
+  }, [status, setPipelineStatus, clearResolved]);
 
   // Fetch agent health + git data
   const [healthData, setHealthData] = useState<Record<string, import('@/lib/types').AgentHealth>>({});
@@ -117,13 +152,18 @@ export default function GraphPage() {
       searchQuery,
     });
 
-    // Inject live status into node data
+    // Inject live status into node data (with manual resolve override)
     if (status?.agents) {
       for (const node of graph.nodes) {
         const agentId = node.id;
         const liveStatus = status.agents[agentId];
         if (liveStatus) {
-          node.data = { ...node.data, liveStatus };
+          // If user manually marked this agent as resolved, override to success
+          if (resolvedAgentIds.has(agentId) && (liveStatus.state === 'failed' || liveStatus.state === 'running')) {
+            node.data = { ...node.data, liveStatus: { ...liveStatus, state: 'success', lastLog: 'Manually resolved' } };
+          } else {
+            node.data = { ...node.data, liveStatus };
+          }
         }
       }
     }
@@ -154,7 +194,7 @@ export default function GraphPage() {
     }
 
     return graph;
-  }, [project, manualEdges, showArchived, pausedAgentIds, searchQuery, status, diffResult, agentNotes, healthData]);
+  }, [project, manualEdges, showArchived, pausedAgentIds, searchQuery, status, diffResult, agentNotes, healthData, resolvedAgentIds]);
 
   const [warningDismissed, setWarningDismissed] = useState(false);
   const warningCount = project?.warnings?.length ?? 0;
@@ -183,7 +223,7 @@ export default function GraphPage() {
           </button>
           <div className="w-px h-5 bg-[#1E1E3A]" />
           <span className="text-xs font-bold text-[#F5A623] tracking-wide">
-            HailMary
+            Lattice
           </span>
           <span className="text-xs text-[#7777A0]">/</span>
           <span className="text-xs text-[#9999BB]">
@@ -199,6 +239,7 @@ export default function GraphPage() {
           )}
           <span className="text-[10px] text-[#7777A0]">
             {project.agents.length} agents &middot; {project.edges.length} connections
+            {watching && <span className="ml-1.5 text-[#2ECC71]" title="Auto-sync active">&middot; sync</span>}
           </span>
         </div>
       </div>
@@ -229,6 +270,7 @@ export default function GraphPage() {
         <Legend />
         <AgentDetailPanel />
         <SnapshotPanel />
+        <CostPanel />
       </div>
 
       {/* Live timeline bar */}

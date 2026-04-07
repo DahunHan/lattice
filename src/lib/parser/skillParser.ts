@@ -15,6 +15,7 @@ export function parseSkillFile(content: string, path: string): {
   name: string | null;
   description: string | null;
   instructions: string;
+  filePath: string;
 } {
   const frontmatter = parseFrontmatter(content);
 
@@ -34,6 +35,7 @@ export function parseSkillFile(content: string, path: string): {
     name: frontmatter['name'] || null,
     description: frontmatter['description'] || null,
     instructions,
+    filePath: path,
   };
 }
 
@@ -65,6 +67,7 @@ export function enrichAgentsWithSkills(
       ...agent,
       description: match.description ?? agent.description,
       instructions: match.instructions ?? agent.instructions,
+      sourceFile: agent.sourceFile ?? match.filePath,
     };
   });
 }

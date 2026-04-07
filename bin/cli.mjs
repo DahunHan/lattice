@@ -14,10 +14,10 @@ const args = process.argv.slice(2);
 
 if (args.some(a => a === '--help' || a === '-h')) {
   console.log(`
-  hailmary - See your agents. Understand the flow.
+  lattice - See your agents. Understand the flow.
 
   Usage:
-    npx hailmary [path] [options]
+    npx lattice [path] [options]
 
   Arguments:
     path          Project folder to scan on startup (optional)
@@ -28,16 +28,16 @@ if (args.some(a => a === '--help' || a === '-h')) {
     -v, --version Show version
 
   Examples:
-    npx hailmary                    # Start dashboard, upload files manually
-    npx hailmary ./my-project       # Start and auto-scan a folder
-    npx hailmary -p 4000            # Run on port 4000
+    npx lattice                    # Start dashboard, upload files manually
+    npx lattice ./my-project       # Start and auto-scan a folder
+    npx lattice -p 4000            # Run on port 4000
   `);
   process.exit(0);
 }
 
 if (args.some(a => a === '--version' || a === '-v')) {
   const pkg = JSON.parse(readFileSync(join(projectRoot, 'package.json'), 'utf-8'));
-  console.log(`hailmary v${pkg.version}`);
+  console.log(`lattice v${pkg.version}`);
   process.exit(0);
 }
 
@@ -106,7 +106,7 @@ async function main() {
   // Check port availability
   const portAvailable = await checkPort(port);
   if (!portAvailable) {
-    console.error(`Error: Port ${port} is already in use. Try: npx hailmary -p ${port + 1}`);
+    console.error(`Error: Port ${port} is already in use. Try: npx lattice -p ${port + 1}`);
     process.exit(1);
   }
 
@@ -117,7 +117,7 @@ async function main() {
   };
 
   if (scanPath) {
-    env.HAILMARY_SCAN_PATH = scanPath;
+    env.LATTICE_SCAN_PATH = scanPath;
   }
 
   // Check if the standalone build exists
@@ -127,7 +127,7 @@ async function main() {
 
   // Build if needed
   if (!hasNextDir) {
-    console.log('Building HailMary for first run...');
+    console.log('Building Lattice for first run...');
     const build = spawn('npx', ['next', 'build'], {
       cwd: projectRoot,
       stdio: 'inherit',
@@ -147,7 +147,7 @@ async function main() {
   const url = `http://localhost:${port}`;
 
   console.log(`
-  HailMary is running${scanInfo}
+  Lattice is running${scanInfo}
 
     Local:   ${url}
     Network: disabled (localhost only)

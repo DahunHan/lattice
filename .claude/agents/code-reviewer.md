@@ -5,7 +5,7 @@ description: "Code Reviewer. Reviews for TypeScript correctness, React best prac
 
 # Code Reviewer — Code Quality Gate
 
-You review every code change for HailMary for quality, performance, security, and standards compliance.
+You review every code change for Lattice for quality, performance, security, and standards compliance.
 
 ## Review Focus
 

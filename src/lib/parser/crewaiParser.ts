@@ -66,6 +66,7 @@ export function parseCrewAIAgentsYaml(content: string): Agent[] {
       phase: null,
       schedule: null,
       tags: ['crewai'],
+      sourceFile: null,
     });
   }
 

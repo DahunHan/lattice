@@ -1,11 +1,11 @@
-# HailMary
+# Lattice
 
 **See your agents. Understand the flow. Don't lose track.**
 
-HailMary is an open-source dashboard that automatically visualizes agent workflows from your project files. Point it at a folder or drop your markdown files — it reads your agent definitions, maps the relationships, and renders an interactive graph. Zero config required.
+Lattice is an open-source dashboard that automatically visualizes agent workflows from your project files. Point it at a folder or drop your markdown files — it reads your agent definitions, maps the relationships, and renders an interactive graph. Zero config required.
 
 <!-- Add a screenshot of the graph view here -->
-<!-- ![HailMary Dashboard](docs/screenshot-graph.png) -->
+<!-- ![Lattice Dashboard](docs/screenshot-graph.png) -->
 
 ---
 
@@ -13,12 +13,12 @@ HailMary is an open-source dashboard that automatically visualizes agent workflo
 
 You're building with multiple AI agents — sourcing, analysis, verification, publishing, quality review. The project grows. Agents multiply. Data flows between them through files and APIs. Eventually the system is too complex to hold in your head, and the only way to understand it is to read every file.
 
-HailMary solves this by **auto-reading your project** and **drawing the workflow for you**.
+Lattice solves this by **auto-reading your project** and **drawing the workflow for you**.
 
 ## How It Works
 
 ```
-Your project folder          HailMary
+Your project folder          Lattice
                               
   AGENT_MAP.md ──────┐        ┌──────────────────────┐
   .claude/agents/ ───┤        │                      │
@@ -28,7 +28,7 @@ Your project folder          HailMary
   Any .md ───────────┘        └──────────────────────┘
 ```
 
-1. **Scan** — Point HailMary at your project folder, or drag-and-drop `.md` files
+1. **Scan** — Point Lattice at your project folder, or drag-and-drop `.md` files
 2. **Parse** — 7 specialized parsers detect agents from structured and unstructured markdown
 3. **Visualize** — An interactive node graph shows every agent, their model, role, pipeline order, and connections
 4. **Monitor** — Toggle live monitoring to see which agent is running, with real-time log streaming
@@ -61,6 +61,18 @@ Your project folder          HailMary
 - **Agent notes** — annotate any agent with persisted notes
 - Search and filter agents in real-time
 
+### Auto-Sync
+- File watcher polls every 5 seconds for changes in your project
+- When `.md`, `.py`, or `.yaml` files change, the graph auto-rescans
+- Green "sync" indicator in the header when active
+- No manual re-scan needed after editing files
+
+### Cost Tracking
+- Estimated run cost per agent based on model rates and runtime duration
+- Cost panel in bottom-right shows per-agent breakdown
+- Total pipeline cost estimate
+- Works with live monitoring data
+
 ### Agent Health
 - Green/amber/red health dots on every agent node
 - Script existence check — does the file actually exist?
@@ -71,6 +83,13 @@ Your project folder          HailMary
 - Shows last commit info per agent — who changed it, when, what commit message
 - Automatic detection for git repositories
 - "Changed 2 hours ago by @han — Fix sourcing timeout"
+
+### Bidirectional Editing
+- **Edit agent instructions** — click Edit on any agent's SKILL.md instructions, modify in-place, preview diff before writing
+- **Toggle agent status** — switch between active/paused/archived from the dashboard, writes back to source file
+- **Diff preview modal** — every file write shows a before/after diff for review before confirming
+- **Auto-snapshot** — a snapshot is saved automatically before every file write (safety net)
+- **Mark as Resolved** — manually override failed/running pipeline status after intervention
 
 ### Live Monitoring
 - Polls pipeline logs for real-time agent status
@@ -103,9 +122,9 @@ Your project folder          HailMary
 - Snapshots persist across sessions
 
 ### CLI Distribution
-- `npx hailmary` — zero-install local server
-- `npx hailmary ./my-project` — auto-scan a folder on startup
-- `npx hailmary -p 4000` — custom port
+- `npx lattice` — zero-install local server
+- `npx lattice ./my-project` — auto-scan a folder on startup
+- `npx lattice -p 4000` — custom port
 - Standalone build with automatic browser open
 - Port-in-use detection with helpful suggestions
 
@@ -120,8 +139,8 @@ Your project folder          HailMary
 ## Quick Start
 
 ```bash
-git clone https://github.com/your-username/hailmary.git
-cd hailmary/HailMary
+git clone https://github.com/your-username/lattice.git
+cd lattice/Lattice
 npm install
 npm run dev
 ```
@@ -133,14 +152,14 @@ Open [http://localhost:3000](http://localhost:3000) and either:
 ### CLI (recommended)
 
 ```bash
-npx hailmary                    # Start dashboard
-npx hailmary ./my-project       # Auto-scan a folder
-npx hailmary -p 4000            # Custom port
+npx lattice                    # Start dashboard
+npx lattice ./my-project       # Auto-scan a folder
+npx lattice -p 4000            # Custom port
 ```
 
 ### Try the Example
 
-HailMary ships with a sample harness in `examples/sample-harness/`. Scan that folder to see a 6-agent pipeline with orchestrator supervision, pipeline phases, and log-based monitoring.
+Lattice ships with a sample harness in `examples/sample-harness/`. Scan that folder to see a 6-agent pipeline with orchestrator supervision, pipeline phases, and log-based monitoring.
 
 ## Tech Stack
 
@@ -153,7 +172,7 @@ HailMary ships with a sample harness in `examples/sample-harness/`. Scan that fo
 | Animation | Framer Motion |
 | Styling | Tailwind CSS v4 |
 | Language | TypeScript (strict mode) |
-| Testing | Vitest (88 tests) |
+| Testing | Vitest (88 tests, 5 suites) |
 
 ## Project Structure
 
@@ -232,7 +251,7 @@ Phase 1 (one-way visualization) is fully built and functional:
 - [x] Framework plugins — CrewAI, LangGraph, AutoGen, OpenAI Agents SDK
 - [x] Snapshot diff — save snapshots, compare, visual diff badges on nodes
 - [x] Export — PNG, SVG, JSON, Mermaid diagram
-- [x] CLI distribution — `npx hailmary` with auto-scan, standalone build
+- [x] CLI distribution — `npx lattice` with auto-scan, standalone build
 - [x] Manual edges and agent notes — draw missing connections, annotate agents
 - [x] Agent health check — script existence, staleness detection
 - [x] Git integration — last commit info per agent
@@ -240,15 +259,28 @@ Phase 1 (one-way visualization) is fully built and functional:
 - [ ] File watcher — sub-second monitoring updates via fs.watch
 
 ### Phase 3: Agent IDE Companion
-- [ ] Bidirectional editing — add/modify agents from the dashboard, writes back to files
+- [x] Bidirectional editing — edit instructions and toggle status from dashboard, with diff preview
+- [x] Auto-sync — file watcher auto-rescans when project files change
+- [x] Cost tracking — estimated cost per agent based on model rates and runtime
+- [x] VS Code extension — open agent dashboard as a side panel while you code
 - [ ] Execution replay — record and step through full pipeline runs
-- [ ] Cost tracking — token usage and cost-per-agent from logs
-- [ ] VS Code / Cursor extension — side panel graph while you code
 - [ ] Tauri desktop app — native experience with system tray
+
+## VS Code Extension
+
+Lattice includes a VS Code extension that opens the dashboard as a side panel.
+
+```bash
+cd vscode-extension
+npm install
+npm run build
+```
+
+Then in VS Code: `Ctrl+Shift+P` → "Lattice: Scan Current Workspace" — opens the graph next to your code.
 
 ## Built With a Harness
 
-HailMary itself is built using a 5-agent development harness:
+Lattice itself is built using a 5-agent development harness:
 
 | Agent | Role |
 |-------|------|
@@ -258,7 +290,7 @@ HailMary itself is built using a 5-agent development harness:
 | Code Reviewer | TypeScript correctness, performance, security |
 | QA Tester | Parser validation, edge cases, cross-reference |
 
-Scan HailMary's own folder to see this harness visualized.
+Scan Lattice's own folder to see this harness visualized.
 
 ## License
 
@@ -266,4 +298,4 @@ MIT
 
 ## Contributing
 
-HailMary is open source and welcomes contributions. The biggest impact areas right now are framework parser plugins (CrewAI, LangGraph, AutoGen) and export functionality.
+Lattice is open source and welcomes contributions. The biggest impact areas right now are framework parser plugins (CrewAI, LangGraph, AutoGen) and export functionality.

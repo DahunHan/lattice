@@ -1,10 +1,10 @@
 {
-  "name": "hailmary",
+  "name": "lattice",
   "version": "0.1.0",
   "license": "MIT",
   "description": "Interactive dashboard that visualizes agent workflows from your project files",
   "bin": {
-    "hailmary": "./bin/cli.mjs"
+    "lattice": "./bin/cli.mjs"
   },
   "files": [
     "bin/",

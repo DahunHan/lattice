@@ -55,6 +55,7 @@ export function parseAutoGen(content: string, filename: string): { agents: Agent
       phase: null,
       schedule: null,
       tags: ['autogen'],
+      sourceFile: filename,
     });
   }
 

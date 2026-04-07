@@ -1,20 +1,149 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProjectStore } from "@/store/useProjectStore";
 import { getAgentColors, STATUS_COLORS } from "@/lib/theme/colors";
+import { DiffPreviewModal } from "@/components/modals/DiffPreviewModal";
 
 export function AgentDetailPanel() {
   const project = useProjectStore((s) => s.project);
+  const projectPath = useProjectStore((s) => s.projectPath);
   const selectedId = useProjectStore((s) => s.selectedAgentId);
   const selectAgent = useProjectStore((s) => s.selectAgent);
   const agentNotes = useProjectStore((s) => s.agentNotes);
   const setAgentNote = useProjectStore((s) => s.setAgentNote);
   const manualEdges = useProjectStore((s) => s.manualEdges);
   const removeManualEdge = useProjectStore((s) => s.removeManualEdge);
+  const pipelineStatus = useProjectStore((s) => s.pipelineStatus);
+  const resolvedAgentIds = useProjectStore((s) => s.resolvedAgentIds);
+  const markResolved = useProjectStore((s) => s.markResolved);
+  const unmarkResolved = useProjectStore((s) => s.unmarkResolved);
+  const saveSnapshot = useProjectStore((s) => s.saveSnapshot);
+
+  // Panel resize
+  const [panelWidth, setPanelWidth] = useState(380);
+  const isResizing = useRef(false);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    const startX = e.clientX;
+    const startWidth = panelWidth;
+
+    const onMove = (moveEvent: MouseEvent) => {
+      if (!isResizing.current) return;
+      const delta = startX - moveEvent.clientX;
+      const newWidth = Math.max(320, Math.min(800, startWidth + delta));
+      setPanelWidth(newWidth);
+    };
+
+    const onUp = () => {
+      isResizing.current = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, [panelWidth]);
+
+  // Edit state
+  const [editingInstructions, setEditingInstructions] = useState(false);
+  const [editedInstructions, setEditedInstructions] = useState('');
+  const [diffModal, setDiffModal] = useState<{ filePath: string; oldContent: string; newContent: string } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const agent = project?.agents.find((a) => a.id === selectedId) ?? null;
+
+  // Resolve the editable file — prefer sourceFile (always a real path from parsers)
+  // skillFile from AGENT_MAP is often just a directory name, not a valid file path
+  const editableFile = agent?.sourceFile ?? null;
+
+  // Reset edit state when agent changes
+  useEffect(() => {
+    setEditingInstructions(false);
+    setStatusMessage(null);
+  }, [selectedId]);
+
+  const handleInstructionsSave = useCallback(async () => {
+    if (!editableFile || !projectPath) return;
+    try {
+      const res = await fetch(`/api/write-agent?projectPath=${encodeURIComponent(projectPath)}&filePath=${encodeURIComponent(editableFile)}`);
+      const json = await res.json();
+      if (!json.content) return;
+
+      const oldContent = json.content as string;
+      const fmEnd = oldContent.match(/^---\s*\n[\s\S]*?\n---\s*\n/);
+      const frontmatter = fmEnd ? fmEnd[0] : '';
+      const newContent = frontmatter + editedInstructions.trim() + '\n';
+
+      setDiffModal({ filePath: editableFile, oldContent, newContent });
+    } catch {
+      setStatusMessage({ text: 'Failed to read file', type: 'error' });
+    }
+  }, [projectPath, editedInstructions, editableFile]);
+
+  const handleStatusChange = useCallback(async (_ag: typeof agent, newStatus: 'active' | 'paused' | 'archived') => {
+    if (!editableFile || !projectPath || agent?.status === newStatus) return;
+    try {
+      const res = await fetch(`/api/write-agent?projectPath=${encodeURIComponent(projectPath)}&filePath=${encodeURIComponent(editableFile)}`);
+      const json = await res.json();
+      if (!json.content) return;
+
+      const oldContent = json.content as string;
+      let newContent: string;
+
+      // Update or add status in frontmatter
+      if (/^---\s*\n[\s\S]*?status\s*:/m.test(oldContent)) {
+        newContent = oldContent.replace(/^(status\s*:\s*).*$/m, `$1${newStatus}`);
+      } else if (/^---\s*\n/.test(oldContent)) {
+        newContent = oldContent.replace(/^(---\s*\n)/, `$1status: ${newStatus}\n`);
+      } else {
+        newContent = `---\nstatus: ${newStatus}\n---\n${oldContent}`;
+      }
+
+      setDiffModal({ filePath: editableFile, oldContent, newContent });
+    } catch {
+      setStatusMessage({ text: 'Failed to read file', type: 'error' });
+    }
+  }, [projectPath, editableFile, agent?.status]);
+
+  const handleConfirmWrite = useCallback(async () => {
+    if (!diffModal || !projectPath) return;
+    setSaving(true);
+    try {
+      // Auto-snapshot before write
+      saveSnapshot('Before edit');
+
+      const res = await fetch('/api/write-agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectPath,
+          filePath: diffModal.filePath,
+          newContent: diffModal.newContent,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setStatusMessage({ text: 'File updated. Re-scan to see changes.', type: 'success' });
+        setEditingInstructions(false);
+      } else {
+        setStatusMessage({ text: json.error || 'Write failed', type: 'error' });
+      }
+    } catch {
+      setStatusMessage({ text: 'Failed to write file', type: 'error' });
+    } finally {
+      setSaving(false);
+      setDiffModal(null);
+    }
+  }, [diffModal, projectPath, saveSnapshot]);
 
   // Find connected agents (parsed + manual edges)
   const allEdges = [...(project?.edges ?? []), ...manualEdges];
@@ -31,6 +160,7 @@ export function AgentDetailPanel() {
   );
 
   return (
+    <>
     <AnimatePresence>
       {agent && (
         <motion.div
@@ -38,8 +168,20 @@ export function AgentDetailPanel() {
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 400, opacity: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="absolute top-0 right-0 h-full w-[380px] glass-strong border-l border-[#1E1E3A] z-20 overflow-y-auto"
+          className="absolute top-0 right-0 h-full glass-strong border-l border-[#1E1E3A] z-20 overflow-y-auto"
+          style={{ width: panelWidth }}
         >
+          {/* Resize handle with grip dots */}
+          <div
+            onMouseDown={handleResizeStart}
+            className="absolute top-0 left-0 w-3 h-full cursor-col-resize hover:bg-[#F5A623]/10 active:bg-[#F5A623]/20 transition-colors z-10 flex items-center justify-center"
+          >
+            <div className="flex flex-col gap-1 opacity-30 hover:opacity-60 transition-opacity">
+              <div className="w-0.5 h-0.5 rounded-full bg-[#9999BB]" />
+              <div className="w-0.5 h-0.5 rounded-full bg-[#9999BB]" />
+              <div className="w-0.5 h-0.5 rounded-full bg-[#9999BB]" />
+            </div>
+          </div>
           <div className="p-6">
             {/* Close button */}
             <button
@@ -84,6 +226,41 @@ export function AgentDetailPanel() {
             {/* Health */}
             {agent.script && agent.script !== 'N/A' && (
               <HealthIndicator agentId={agent.id} />
+            )}
+
+            {/* Manual resolve / unresolve for failed/running agents */}
+            {selectedId && pipelineStatus?.agents?.[selectedId] &&
+              (pipelineStatus.agents[selectedId].state === 'failed' || pipelineStatus.agents[selectedId].state === 'running') && (
+              <div className="mb-6">
+                {resolvedAgentIds.has(selectedId) ? (
+                  <button
+                    onClick={() => unmarkResolved(selectedId)}
+                    className="
+                      w-full px-4 py-2.5 rounded-xl text-[11px] font-medium
+                      bg-[#7777A0]/10 border border-[#7777A0]/20 text-[#9999BB]
+                      hover:bg-[#7777A0]/20 transition-colors
+                    "
+                  >
+                    Undo Resolve
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => markResolved(selectedId)}
+                      className="
+                        w-full px-4 py-2.5 rounded-xl text-[11px] font-medium
+                        bg-[#2ECC71]/10 border border-[#2ECC71]/20 text-[#2ECC71]
+                        hover:bg-[#2ECC71]/20 transition-colors
+                      "
+                    >
+                      Mark as Resolved
+                    </button>
+                    <p className="text-[9px] text-[#7777A0] mt-1.5 text-center">
+                      Override the failed/running status — e.g. after manual intervention
+                    </p>
+                  </>
+                )}
+              </div>
             )}
 
             {/* Git info */}
@@ -167,16 +344,89 @@ export function AgentDetailPanel() {
               </div>
             )}
 
-            {/* Instructions (SKILL.md content) */}
+            {/* Instructions (SKILL.md content) — editable */}
             {agent.instructions && (
               <div className="mb-6">
-                <h3 className="text-[11px] uppercase tracking-wider text-[#9999BB] font-medium mb-2">
-                  Instructions
-                </h3>
-                <div className="text-[11px] text-[#9999BB] leading-relaxed font-mono bg-[#0A0A1B] rounded-xl p-4 border border-[#1E1E3A] max-h-64 overflow-y-auto whitespace-pre-wrap">
-                  {agent.instructions.slice(0, 2000)}
-                  {agent.instructions.length > 2000 && "..."}
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-[11px] uppercase tracking-wider text-[#9999BB] font-medium">
+                    Instructions
+                  </h3>
+                  {projectPath && editableFile && (
+                    <button
+                      onClick={() => {
+                        if (editingInstructions) {
+                          // Save: show diff preview
+                          handleInstructionsSave();
+                        } else {
+                          setEditedInstructions(agent.instructions ?? '');
+                          setEditingInstructions(true);
+                        }
+                      }}
+                      className="text-[9px] px-2 py-0.5 rounded bg-[#1E1E3A] text-[#9999BB] hover:text-[#E0E0F0] transition-colors"
+                    >
+                      {editingInstructions ? 'Preview Changes' : 'Edit'}
+                    </button>
+                  )}
                 </div>
+                {editingInstructions ? (
+                  <div>
+                    <textarea
+                      value={editedInstructions}
+                      onChange={(e) => setEditedInstructions(e.target.value)}
+                      className="w-full h-64 text-[11px] text-[#B0B0CC] leading-relaxed font-mono bg-[#0A0A1B] rounded-xl p-4 border border-[#F5A623]/30 resize-none focus:outline-none focus:border-[#F5A623]/60 transition-colors"
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={() => setEditingInstructions(false)}
+                        className="text-[9px] px-3 py-1 rounded-lg bg-[#1E1E3A] text-[#9999BB] hover:text-[#E0E0F0] transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-[#9999BB] leading-relaxed font-mono bg-[#0A0A1B] rounded-xl p-4 border border-[#1E1E3A] max-h-64 overflow-y-auto whitespace-pre-wrap">
+                    {agent.instructions.slice(0, 2000)}
+                    {agent.instructions.length > 2000 && "..."}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Status toggle — write back to file */}
+            {projectPath && editableFile && (
+              <div className="mb-6">
+                <h3 className="text-[11px] uppercase tracking-wider text-[#9999BB] font-medium mb-2">
+                  Status
+                </h3>
+                <div className="flex gap-2">
+                  {(['active', 'paused', 'archived'] as const).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => handleStatusChange(agent, s)}
+                      className={`
+                        text-[10px] px-3 py-1.5 rounded-lg font-medium transition-all
+                        ${agent.status === s
+                          ? 'bg-[#F5A623]/15 text-[#F5A623] border border-[#F5A623]/30'
+                          : 'bg-[#1E1E3A] text-[#7777A0] border border-[#1E1E3A] hover:text-[#9999BB]'
+                        }
+                      `}
+                    >
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Status message toast */}
+            {statusMessage && (
+              <div className={`mb-4 px-3 py-2 rounded-lg text-[10px] ${
+                statusMessage.type === 'success'
+                  ? 'bg-[#2ECC71]/10 text-[#2ECC71] border border-[#2ECC71]/20'
+                  : 'bg-red-500/10 text-red-400 border border-red-500/20'
+              }`}>
+                {statusMessage.text}
               </div>
             )}
 
@@ -224,6 +474,20 @@ export function AgentDetailPanel() {
         </motion.div>
       )}
     </AnimatePresence>
+
+    {/* Diff preview modal */}
+    {diffModal && (
+      <DiffPreviewModal
+        open={true}
+        filePath={diffModal.filePath}
+        oldContent={diffModal.oldContent}
+        newContent={diffModal.newContent}
+        onConfirm={handleConfirmWrite}
+        onCancel={() => setDiffModal(null)}
+        saving={saving}
+      />
+    )}
+  </>
   );
 }
 

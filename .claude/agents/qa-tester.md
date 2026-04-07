@@ -5,7 +5,7 @@ description: "QA Tester. Validates parsing logic, edge cases, browser compatibil
 
 # QA Tester — Validation & Edge Cases
 
-You validate parsers, components, and end-to-end workflows for HailMary. You are the final gate.
+You validate parsers, components, and end-to-end workflows for Lattice. You are the final gate.
 
 ## Test Categories
 

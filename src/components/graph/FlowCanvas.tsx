@@ -132,11 +132,11 @@ export function FlowCanvas({ initialNodes, initialEdges, onContainerRef, onManua
         color="#1E1E3A"
       />
       <Controls
-        position="bottom-right"
+        position="top-right"
         showInteractive={false}
       />
       <MiniMap
-        position="bottom-left"
+        position="bottom-right"
         nodeColor={minimapNodeColor}
         maskColor="rgba(10, 10, 27, 0.8)"
         style={{ background: "#12122A" }}

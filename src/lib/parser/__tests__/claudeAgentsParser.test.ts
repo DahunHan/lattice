@@ -15,7 +15,7 @@ description: "System Architect. Defines component structure, data models, API co
 
 # Architect — System & Component Architecture
 
-You are the system architect for HailMary, an open-source Next.js dashboard that visualizes agent workflows.
+You are the system architect for Lattice, an open-source Next.js dashboard that visualizes agent workflows.
 
 ## Core Responsibilities
 
@@ -179,7 +179,7 @@ describe('parseOrchestrationTable', () => {
     makeAgent('qa_tester', 'QA Tester'),
   ];
 
-  const CLAUDE_MD_WITH_WORKFLOW = `# HailMary
+  const CLAUDE_MD_WITH_WORKFLOW = `# Lattice
 
 ## Orchestration
 Built by a 5-agent harness:

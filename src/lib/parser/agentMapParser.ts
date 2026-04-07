@@ -117,6 +117,7 @@ export function parseAgentMap(content: string, filename: string): Agent[] {
         phase: null,
         schedule: null,
         tags: [],
+        sourceFile: null,
       };
     });
 }

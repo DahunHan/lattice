@@ -249,6 +249,7 @@ function mergeAgents(existing: Agent[], incoming: Agent[]): Agent[] {
         schedule: ex.schedule ?? a.schedule,
         role: ex.role || a.role,
         tags: [...new Set([...ex.tags, ...a.tags])],
+        sourceFile: ex.sourceFile ?? a.sourceFile,
       });
     }
   }

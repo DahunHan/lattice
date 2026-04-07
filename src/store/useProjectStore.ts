@@ -44,9 +44,13 @@ interface ProjectStore {
   // Manual overrides
   manualEdges: AgentEdge[];
   agentNotes: Record<string, string>;
+  resolvedAgentIds: Set<string>;
   addManualEdge: (edge: AgentEdge) => void;
   removeManualEdge: (id: string) => void;
   setAgentNote: (agentId: string, text: string) => void;
+  markResolved: (agentId: string) => void;
+  unmarkResolved: (agentId: string) => void;
+  clearResolved: () => void;
 
   // Hydration tracking
   _hasHydrated: boolean;
@@ -126,6 +130,7 @@ export const useProjectStore = create<ProjectStore>()(
       // Manual overrides
       manualEdges: [],
       agentNotes: {},
+      resolvedAgentIds: new Set(),
       addManualEdge: (edge) =>
         set((s) => {
           const exists = s.manualEdges.some(e => e.source === edge.source && e.target === edge.target);
@@ -144,11 +149,24 @@ export const useProjectStore = create<ProjectStore>()(
           }
           return { agentNotes: notes };
         }),
+      markResolved: (agentId) =>
+        set((s) => {
+          const next = new Set(s.resolvedAgentIds);
+          next.add(agentId);
+          return { resolvedAgentIds: next };
+        }),
+      unmarkResolved: (agentId) =>
+        set((s) => {
+          const next = new Set(s.resolvedAgentIds);
+          next.delete(agentId);
+          return { resolvedAgentIds: next };
+        }),
+      clearResolved: () => set({ resolvedAgentIds: new Set() }),
 
       _hasHydrated: false,
     }),
     {
-      name: 'hailmary-project',
+      name: 'lattice-project',
       storage: createJSONStorage(() => localStorage, {
         replacer: (_key, value) => {
           if (value instanceof Set) return { __type: 'Set', values: [...value] };
@@ -170,6 +188,7 @@ export const useProjectStore = create<ProjectStore>()(
         snapshots: state.snapshots,
         manualEdges: state.manualEdges,
         agentNotes: state.agentNotes,
+        resolvedAgentIds: state.resolvedAgentIds,
       }),
       version: 3,
       migrate: (persisted, version) => {

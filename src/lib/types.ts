@@ -28,6 +28,7 @@ export interface Agent {
   phase: number | null;
   schedule: string | null;
   tags: string[];
+  sourceFile: string | null;
 }
 
 // ── Relationships ───────────────────────────────────────────────────────────

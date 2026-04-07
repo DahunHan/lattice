@@ -92,7 +92,7 @@ export default function LandingPage() {
       });
       const json = await res.json();
       const scanMs = Math.round(performance.now() - t0);
-      console.log(`[HailMary] Scan completed in ${scanMs}ms — ${json.filesScanned} files scanned, ${json.filesSkipped ?? 0} skipped`);
+      console.log(`[Lattice] Scan completed in ${scanMs}ms — ${json.filesScanned} files scanned, ${json.filesSkipped ?? 0} skipped`);
       if (!res.ok) {
         setError(json.error || "Scan failed");
         return;
@@ -158,7 +158,7 @@ export default function LandingPage() {
 
           <h1 className="text-5xl font-bold tracking-tight mb-4">
             <span className="bg-gradient-to-r from-[#F5A623] via-[#E0E0F0] to-[#4A9EE0] bg-clip-text text-transparent">
-              HailMary
+              Lattice
             </span>
           </h1>
           <p className="text-[#9999BB] text-lg max-w-md mx-auto leading-relaxed">

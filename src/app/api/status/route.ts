@@ -8,8 +8,10 @@ const LOG_LINE_PATTERN = /^\[([^\]]+)\]\s+\[(\w+)\]\s+(.+?)$/;
 const PHASE_PATTERN = /---\s*Phase\s+[\d.]+:\s*(.+?)\s*---/;
 const RUNNING_PATTERN = /Running:\s+(\w+\.py)/;
 const SUCCESS_PATTERN = /(\w+\.py)\s+completed\s+successfully/;
-const FAILED_PATTERN = /(\w+\.py)\s+(?:failed|error)/i;
-const PIPELINE_COMPLETE = /Pipeline complete/i;
+// Matches: "agent.py failed", "agent.py returned deliberate HALT", "agent.py timed out", etc.
+const FAILED_PATTERN = /(\w+\.py)\s+(?:failed|error|returned.*\bhalt\b|timeout|timed out|killed|crashed|aborted|interrupted)/i;
+const PIPELINE_COMPLETE = /Pipeline (?:complete|finished|done)/i;
+const PIPELINE_HALTED = /Pipeline (?:halted|stopped|aborted)/i;
 
 function scriptToAgentId(script: string): string {
   return script.replace('.py', '').toLowerCase().replace(/[^a-z0-9]+/g, '_');
@@ -36,8 +38,15 @@ function parseLogLine(line: string): LogEntry | null {
 
 function buildAgentStatuses(logs: LogEntry[]): Record<string, LiveAgentStatus> {
   const statuses: Record<string, LiveAgentStatus> = {};
+  let currentlyRunning: string | null = null;
+  let pipelineComplete = false;
 
   for (const log of logs) {
+    // Check for pipeline completion or halt
+    if (PIPELINE_COMPLETE.test(log.message) || PIPELINE_HALTED.test(log.message)) {
+      pipelineComplete = true;
+    }
+
     if (!log.agentId) continue;
     const id = log.agentId;
 
@@ -50,10 +59,17 @@ function buildAgentStatuses(logs: LogEntry[]): Record<string, LiveAgentStatus> {
     const failed = log.message.match(FAILED_PATTERN);
 
     if (running) {
+      // If another agent was running and never completed, mark it as failed (skipped/blocked)
+      if (currentlyRunning && currentlyRunning !== id && statuses[currentlyRunning]?.state === 'running') {
+        statuses[currentlyRunning].state = 'failed';
+        statuses[currentlyRunning].completedAt = log.timestamp;
+        statuses[currentlyRunning].lastLog = 'Interrupted — next agent started before completion';
+      }
       statuses[id].state = 'running';
       statuses[id].startedAt = log.timestamp;
       statuses[id].completedAt = null;
       statuses[id].lastLog = log.message;
+      currentlyRunning = id;
     } else if (success) {
       statuses[id].state = 'success';
       statuses[id].completedAt = log.timestamp;
@@ -61,10 +77,22 @@ function buildAgentStatuses(logs: LogEntry[]): Record<string, LiveAgentStatus> {
       if (statuses[id].startedAt) {
         statuses[id].durationMs = new Date(log.timestamp).getTime() - new Date(statuses[id].startedAt!).getTime();
       }
+      if (currentlyRunning === id) currentlyRunning = null;
     } else if (failed) {
       statuses[id].state = 'failed';
       statuses[id].completedAt = log.timestamp;
       statuses[id].lastLog = log.message;
+      if (currentlyRunning === id) currentlyRunning = null;
+    }
+  }
+
+  // If pipeline completed but some agents are still "running", mark them as failed
+  if (pipelineComplete) {
+    for (const [, status] of Object.entries(statuses)) {
+      if (status.state === 'running') {
+        status.state = 'failed';
+        status.lastLog = 'Pipeline completed but agent never finished';
+      }
     }
   }
 

@@ -3,7 +3,7 @@ name: orchestrator
 description: "Development orchestrator. Coordinates 5 agents through design -> build -> review -> validate pipeline with quality gates."
 ---
 
-# Orchestrator — HailMary Development Pipeline
+# Orchestrator — Lattice Development Pipeline
 
 ## Agent Team
 

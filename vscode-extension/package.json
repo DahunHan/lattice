@@ -1,0 +1,35 @@
+{
+  "name": "lattice-vscode",
+  "displayName": "Lattice — Agent Workflow Visualizer",
+  "description": "Visualize your agent workflows directly in VS Code",
+  "version": "0.1.0",
+  "publisher": "lattice",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Visualization", "Other"],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "lattice.openDashboard",
+        "title": "Lattice: Open Agent Dashboard"
+      },
+      {
+        "command": "lattice.scanWorkspace",
+        "title": "Lattice: Scan Current Workspace"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "watch": "npm run build -- --watch"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.0.0"
+  }
+}

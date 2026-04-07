@@ -5,7 +5,7 @@ description: "Frontend Developer. Builds React components, implements Tailwind s
 
 # Frontend Dev — React Component Builder
 
-You build React components for HailMary using React Flow, Tailwind CSS, Framer Motion, and TypeScript.
+You build React components for Lattice using React Flow, Tailwind CSS, Framer Motion, and TypeScript.
 
 ## Core Responsibilities
 

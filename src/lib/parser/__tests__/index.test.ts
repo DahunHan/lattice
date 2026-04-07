@@ -6,7 +6,7 @@ import type { RawFile } from '../index';
 
 const CLAUDE_MD: RawFile = {
   name: 'CLAUDE.md',
-  content: `# HailMary — Agent Workflow Visualizer
+  content: `# Lattice — Agent Workflow Visualizer
 
 ## 1. Goal
 Open-source Next.js dashboard that auto-reads project folders and renders interactive visualization of agent workflows.
@@ -37,7 +37,7 @@ description: "System Architect. Defines component structure, data models, API co
 
 # Architect — System & Component Architecture
 
-You are the system architect for HailMary.
+You are the system architect for Lattice.
 
 ## Core Responsibilities
 1. **Component Architecture**: Define React component tree.
@@ -124,7 +124,7 @@ describe('parseProject', () => {
 
   it('extracts metadata from a single CLAUDE.md', () => {
     const result = parseProject([CLAUDE_MD]);
-    expect(result.metadata.name).toBe('HailMary');
+    expect(result.metadata.name).toBe('Lattice');
     expect(result.metadata.goal).toContain('Next.js dashboard');
   });
 
@@ -140,7 +140,7 @@ describe('parseProject', () => {
     );
   });
 
-  describe('HailMary-style project (.claude/agents + CLAUDE.md)', () => {
+  describe('Lattice-style project (.claude/agents + CLAUDE.md)', () => {
     const allFiles = [
       CLAUDE_MD,
       ARCHITECT_AGENT,

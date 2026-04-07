@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HailMary — Agent Workflow Visualizer",
+  title: "Lattice — Agent Workflow Visualizer",
   description: "Interactive dashboard that visualizes agent workflows from your project files",
 };
 

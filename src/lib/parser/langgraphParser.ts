@@ -53,6 +53,7 @@ export function parseLangGraph(content: string, filename: string): { agents: Age
         phase: null,
         schedule: null,
         tags: ['langgraph'],
+        sourceFile: filename,
       });
     }
   }

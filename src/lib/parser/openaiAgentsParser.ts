@@ -60,6 +60,7 @@ export function parseOpenAIAgents(content: string, filename: string): { agents: 
       phase: null,
       schedule: null,
       tags: ['openai-agents'],
+      sourceFile: filename,
     });
   }
 

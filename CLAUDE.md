@@ -1,4 +1,4 @@
-# HailMary — Agent Workflow Visualizer
+# Lattice — Agent Workflow Visualizer
 
 ## 1. Goal
 Open-source Next.js dashboard that auto-reads project folders or uploaded MD files and renders an interactive, stunning visualization of agent workflows. Replaces the FlowSight Streamlit prototype.

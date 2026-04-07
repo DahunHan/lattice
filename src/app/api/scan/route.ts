@@ -190,7 +190,7 @@ export async function POST(req: NextRequest) {
     const projectData = parseProject(files);
     const parseMs = Date.now() - t1;
 
-    console.log(`[HailMary] Scan: ${scanMs}ms (${counters.scanned} files, ${counters.skipped} skipped) | Parse: ${parseMs}ms | Agents: ${projectData.agents.length}`);
+    console.log(`[Lattice] Scan: ${scanMs}ms (${counters.scanned} files, ${counters.skipped} skipped) | Parse: ${parseMs}ms | Agents: ${projectData.agents.length}`);
 
     return NextResponse.json({
       data: projectData,

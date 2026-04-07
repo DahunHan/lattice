@@ -77,6 +77,7 @@ export function parseClaudeAgentFile(content: string, path: string): Agent {
     phase: null,
     schedule: null,
     tags: extractTags(content),
+    sourceFile: path,
   };
 }
 
