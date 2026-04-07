@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { ProjectData, PipelineStatus } from '@/lib/types';
+import type { ProjectData, PipelineStatus, AgentEdge } from '@/lib/types';
 import type { Snapshot, DiffResult } from '@/lib/snapshot/snapshotTypes';
 import { diffSnapshots } from '@/lib/snapshot/diffEngine';
 
@@ -36,6 +36,17 @@ interface ProjectStore {
   deleteSnapshot: (id: string) => void;
   compareWith: (id: string) => void;
   clearComparison: () => void;
+
+  // Git info (not persisted — live data)
+  gitInfo: Record<string, { lastAuthor: string; lastModifiedRelative: string; lastCommitMessage: string }>;
+  setGitInfo: (data: Record<string, { lastAuthor: string; lastModifiedRelative: string; lastCommitMessage: string }>) => void;
+
+  // Manual overrides
+  manualEdges: AgentEdge[];
+  agentNotes: Record<string, string>;
+  addManualEdge: (edge: AgentEdge) => void;
+  removeManualEdge: (id: string) => void;
+  setAgentNote: (agentId: string, text: string) => void;
 
   // Hydration tracking
   _hasHydrated: boolean;
@@ -108,6 +119,32 @@ export const useProjectStore = create<ProjectStore>()(
         }),
       clearComparison: () => set({ activeComparisonId: null, diffResult: null }),
 
+      // Git info
+      gitInfo: {},
+      setGitInfo: (data) => set({ gitInfo: data }),
+
+      // Manual overrides
+      manualEdges: [],
+      agentNotes: {},
+      addManualEdge: (edge) =>
+        set((s) => {
+          const exists = s.manualEdges.some(e => e.source === edge.source && e.target === edge.target);
+          if (exists) return s;
+          return { manualEdges: [...s.manualEdges, edge] };
+        }),
+      removeManualEdge: (id) =>
+        set((s) => ({ manualEdges: s.manualEdges.filter(e => e.id !== id) })),
+      setAgentNote: (agentId, text) =>
+        set((s) => {
+          const notes = { ...s.agentNotes };
+          if (text.trim()) {
+            notes[agentId] = text;
+          } else {
+            delete notes[agentId];
+          }
+          return { agentNotes: notes };
+        }),
+
       _hasHydrated: false,
     }),
     {
@@ -131,8 +168,10 @@ export const useProjectStore = create<ProjectStore>()(
         pausedAgentIds: state.pausedAgentIds,
         monitoringEnabled: state.monitoringEnabled,
         snapshots: state.snapshots,
+        manualEdges: state.manualEdges,
+        agentNotes: state.agentNotes,
       }),
-      version: 2,
+      version: 3,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>;
         if (version < 1) {
@@ -146,6 +185,14 @@ export const useProjectStore = create<ProjectStore>()(
         if (version < 2) {
           if (!Array.isArray(state.snapshots)) {
             state.snapshots = [];
+          }
+        }
+        if (version < 3) {
+          if (!Array.isArray(state.manualEdges)) {
+            state.manualEdges = [];
+          }
+          if (!state.agentNotes || typeof state.agentNotes !== 'object') {
+            state.agentNotes = {};
           }
         }
         return state as never;

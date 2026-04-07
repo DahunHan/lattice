@@ -29,7 +29,7 @@ const DIFF_BADGE: Record<string, { label: string; color: string; bg: string }> =
 };
 
 function AgentNodeComponent({ data }: NodeProps<Node<AgentNodeData>>) {
-  const { agent, isPaused, liveStatus, diffStatus } = data;
+  const { agent, isPaused, liveStatus, diffStatus, hasNote, health } = data;
   const colors = getAgentColors(agent);
   const isLive = liveStatus && liveStatus.state !== 'idle';
   const isRunning = liveStatus?.state === 'running';
@@ -157,6 +157,24 @@ function AgentNodeComponent({ data }: NodeProps<Node<AgentNodeData>>) {
               <span className="text-[9px] text-[#9999BB] font-mono">
                 Phase {agent.phase}
               </span>
+            )}
+            {hasNote && (
+              <span className="text-[9px] text-[#F5A623]/60" title="Has notes">
+                &#9998;
+              </span>
+            )}
+            {health && (
+              <div
+                className="w-2 h-2 rounded-full ml-auto"
+                title={health.scriptExists
+                  ? `Modified ${health.staleDays}d ago`
+                  : 'Script not found'}
+                style={{
+                  background: !health.scriptExists ? '#E74C3C'
+                    : (health.staleDays ?? 0) > 30 ? '#F39C12'
+                    : '#2ECC71',
+                }}
+              />
             )}
           </div>
         </div>

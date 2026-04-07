@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { useRouter } from "next/navigation";
-import { ReactFlowProvider } from "@xyflow/react";
+import { ReactFlowProvider, type Connection } from "@xyflow/react";
 import { useProjectStore } from "@/store/useProjectStore";
 import { buildFlowGraph } from "@/lib/graph/buildGraph";
 import { useAgentStatus } from "@/hooks/useAgentStatus";
@@ -26,13 +26,19 @@ export default function GraphPage() {
   const setPipelineStatus = useProjectStore((s) => s.setPipelineStatus);
   const hasHydrated = useProjectStore((s) => s._hasHydrated);
   const diffResult = useProjectStore((s) => s.diffResult);
+  const manualEdges = useProjectStore((s) => s.manualEdges);
+  const addManualEdge = useProjectStore((s) => s.addManualEdge);
+  const agentNotes = useProjectStore((s) => s.agentNotes);
 
-  // Redirect to landing if no project loaded (only after hydration)
+  // Redirect to landing if no project loaded (only after hydration completes)
   useEffect(() => {
     if (hasHydrated && !project) {
       router.replace("/");
     }
   }, [hasHydrated, project, router]);
+
+  // If project exists (from setProject), we don't need to wait for hydration
+  const ready = !!project;
 
   // Live monitoring hook
   const { status, isPolling, lastUpdated } = useAgentStatus({
@@ -45,9 +51,67 @@ export default function GraphPage() {
     setPipelineStatus(status);
   }, [status, setPipelineStatus]);
 
+  // Fetch agent health + git data
+  const [healthData, setHealthData] = useState<Record<string, import('@/lib/types').AgentHealth>>({});
+  const setGitInfo = useProjectStore((s) => s.setGitInfo);
+  useEffect(() => {
+    if (!project || !projectPath) return;
+    const scripts = project.agents
+      .filter(a => a.script && a.script !== 'N/A')
+      .map(a => ({ agentId: a.id, scriptPath: a.script! }));
+    if (scripts.length === 0) return;
+
+    fetch('/api/health', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: projectPath, scripts }),
+    })
+      .then(res => res.json())
+      .then(json => { if (json.data) setHealthData(json.data); })
+      .catch(() => { /* ignore */ });
+
+    // Fetch git info for all agent-related files
+    const allFiles = project.rawFiles
+      .filter(f => f.type !== 'generic')
+      .map(f => ({ agentId: f.path.replace(/[^a-z0-9]+/gi, '_').toLowerCase(), filePath: f.path }));
+    // Also map scripts to agent IDs
+    const scriptFiles = project.agents
+      .filter(a => a.script && a.script !== 'N/A')
+      .map(a => ({ agentId: a.id, filePath: a.script! }));
+    const gitFiles = [...scriptFiles, ...allFiles];
+
+    if (gitFiles.length > 0) {
+      fetch('/api/git', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: projectPath, files: gitFiles }),
+      })
+        .then(res => res.json())
+        .then(json => { if (json.data) setGitInfo(json.data); })
+        .catch(() => { /* ignore — not a git repo */ });
+    }
+  }, [project, projectPath]);
+
+  // Handle manual edge connections
+  const handleManualConnect = useCallback((connection: Connection) => {
+    if (!connection.source || !connection.target) return;
+    addManualEdge({
+      id: `manual_${connection.source}->${connection.target}`,
+      source: connection.source,
+      target: connection.target,
+      type: 'pipeline',
+      label: 'manual',
+    });
+  }, [addManualEdge]);
+
   const { nodes, edges } = useMemo(() => {
     if (!project) return { nodes: [], edges: [] };
-    const graph = buildFlowGraph(project, {
+
+    // Merge parsed edges with manual edges
+    const allEdges = [...project.edges, ...manualEdges];
+    const projectWithManual = { ...project, edges: allEdges };
+
+    const graph = buildFlowGraph(projectWithManual, {
       showArchived,
       pausedIds: pausedAgentIds,
       searchQuery,
@@ -79,8 +143,18 @@ export default function GraphPage() {
       }
     }
 
+    // Inject note indicators and health data
+    for (const node of graph.nodes) {
+      const extras: Record<string, unknown> = {};
+      if (agentNotes[node.id]) extras.hasNote = true;
+      if (healthData[node.id]) extras.health = healthData[node.id];
+      if (Object.keys(extras).length > 0) {
+        node.data = { ...node.data, ...extras };
+      }
+    }
+
     return graph;
-  }, [project, showArchived, pausedAgentIds, searchQuery, status, diffResult]);
+  }, [project, manualEdges, showArchived, pausedAgentIds, searchQuery, status, diffResult, agentNotes, healthData]);
 
   const [warningDismissed, setWarningDismissed] = useState(false);
   const warningCount = project?.warnings?.length ?? 0;
@@ -89,15 +163,8 @@ export default function GraphPage() {
     graphElementRef.current = el;
   }, []);
 
-  if (!hasHydrated || !project) {
-    return (
-      <div className="h-screen w-screen bg-[#0A0A1B] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#F5A623] border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs text-[#7777A0]">Loading project...</span>
-        </div>
-      </div>
-    );
+  if (!ready) {
+    return <LoadingScreen />;
   }
 
   return (
@@ -154,7 +221,7 @@ export default function GraphPage() {
       {/* Main canvas area */}
       <div className="absolute inset-0 pt-12" style={{ paddingTop: warningCount > 0 && !warningDismissed ? '80px' : '48px', paddingBottom: monitoringEnabled && status ? '40px' : '0' }}>
         <ReactFlowProvider>
-          <FlowCanvas initialNodes={nodes} initialEdges={edges} onContainerRef={handleContainerRef} />
+          <FlowCanvas initialNodes={nodes} initialEdges={edges} onContainerRef={handleContainerRef} onManualConnect={handleManualConnect} />
         </ReactFlowProvider>
 
         {/* Overlay panels */}
@@ -168,6 +235,60 @@ export default function GraphPage() {
       {monitoringEnabled && (
         <LiveTimeline status={status} isPolling={isPolling} lastUpdated={lastUpdated} />
       )}
+    </div>
+  );
+}
+
+const LOADING_STEPS = [
+  { text: 'Reading project files', sub: 'Scanning .md, .py, .yaml' },
+  { text: 'Detecting agents', sub: 'Running 11 parsers' },
+  { text: 'Mapping relationships', sub: 'Edges, pipelines, supervision' },
+  { text: 'Computing layout', sub: 'Dagre hierarchical positioning' },
+  { text: 'Rendering graph', sub: 'Almost there...' },
+];
+
+function LoadingScreen(): ReactElement {
+  const [step, setStep] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setStep((s) => Math.min(s + 1, LOADING_STEPS.length - 1));
+      setElapsed((e) => e + 1);
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const current = LOADING_STEPS[step];
+  const atEnd = step === LOADING_STEPS.length - 1;
+
+  return (
+    <div className="h-screen w-screen bg-[#0A0A1B] flex items-center justify-center">
+      <div className="flex flex-col items-center gap-5">
+        {/* Spinner with pulsing glow */}
+        <div className="relative">
+          <div className="absolute inset-0 w-12 h-12 rounded-full bg-[#F5A623]/20 blur-xl animate-pulse" />
+          <div className="relative w-12 h-12 border-2 border-[#F5A623] border-t-transparent rounded-full animate-spin" />
+        </div>
+
+        {/* Status text */}
+        <div className="text-center min-w-[220px]">
+          <p className="text-sm text-[#E0E0F0] font-medium">
+            {atEnd && elapsed > 8 ? 'Still working on it...' : current.text}
+          </p>
+          <p className="text-[11px] text-[#7777A0] mt-1">
+            {atEnd && elapsed > 8 ? 'Large projects take a moment' : current.sub}
+          </p>
+        </div>
+
+        {/* Progress bar instead of dots */}
+        <div className="w-48 h-1 bg-[#1E1E3A] rounded-full overflow-hidden">
+          <div
+            className="h-full bg-[#F5A623] rounded-full transition-all duration-700 ease-out"
+            style={{ width: atEnd ? '90%' : `${((step + 1) / LOADING_STEPS.length) * 80}%` }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

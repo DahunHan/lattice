@@ -86,6 +86,13 @@ export interface ProjectData {
 
 export type DiffStatus = 'added' | 'removed' | 'changed' | null;
 
+export interface AgentHealth {
+  scriptExists: boolean;
+  scriptLastModified: string | null;
+  scriptSize: number | null;
+  staleDays: number | null;
+}
+
 export interface AgentNodeData {
   agent: Agent;
   isSelected: boolean;
@@ -93,6 +100,8 @@ export interface AgentNodeData {
   liveStatus?: LiveAgentStatus;
   diffStatus?: DiffStatus;
   diffDetails?: string;
+  hasNote?: boolean;
+  health?: AgentHealth;
   [key: string]: unknown;
 }
 

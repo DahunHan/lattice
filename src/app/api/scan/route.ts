@@ -8,6 +8,8 @@ const IGNORE_DIRS = new Set([
   'node_modules', '.git', '__pycache__', '.next', 'dist', 'build',
   '.venv', 'venv', 'env', '.tox', '.mypy_cache', '.pytest_cache',
   '_workspace', 'coverage', '.turbo',
+  // Content directories — not agent definitions
+  'drafts', 'logs', 'output', 'outputs', 'data', 'tmp', 'temp',
 ]);
 
 const MAX_DEPTH = 6;
@@ -99,11 +101,12 @@ async function readProjectFile(
   counters: { scanned: number; skipped: number }
 ): Promise<void> {
   try {
-    // Symlink protection
-    const resolved = await realpath(fullPath);
-    if (!resolved.startsWith(baseDir)) { counters.skipped++; return; }
-
     const fileStats = await stat(fullPath);
+    // Skip if it's actually a symlink pointing outside base (rare for files)
+    if (fileStats.isSymbolicLink?.()) {
+      const resolved = await realpath(fullPath);
+      if (!resolved.startsWith(baseDir)) { counters.skipped++; return; }
+    }
     const ext = extname(filename).toLowerCase();
     const isPython = ext === '.py';
 
@@ -111,18 +114,14 @@ async function readProjectFile(
     const sizeLimit = isPython ? MAX_PY_FILE_SIZE : MAX_FILE_SIZE;
     if (fileStats.size > sizeLimit) { counters.skipped++; return; }
 
-    // For .py files: quick fingerprint check on first 2KB before reading the full file
-    if (isPython && fileStats.size > 2048) {
-      const fd = await import('fs').then(fs => fs.promises.open(fullPath, 'r'));
-      const buf = Buffer.alloc(2048);
-      await fd.read(buf, 0, 2048, 0);
-      await fd.close();
-      const head = buf.toString('utf-8');
+    const content = await readFile(fullPath, 'utf-8');
+
+    // For .py files: quick fingerprint check — skip if no agent framework signals
+    if (isPython && content.length > 500) {
+      const head = content.slice(0, 2000);
       const hasFingerprint = PY_AGENT_FINGERPRINTS.some(fp => head.includes(fp));
       if (!hasFingerprint) { counters.skipped++; return; }
     }
-
-    const content = await readFile(fullPath, 'utf-8');
     counters.scanned++;
     results.push({
       name: filename,
@@ -176,16 +175,22 @@ export async function POST(req: NextRequest) {
     const realRoot = await realpath(resolvedPath);
 
     // Find all project files (md, py, yaml, yml, json)
+    const t0 = Date.now();
     const files: { name: string; content: string; path: string }[] = [];
     const counters = { scanned: 0, skipped: 0 };
     await findProjectFiles(realRoot, realRoot, 0, files, counters);
+    const scanMs = Date.now() - t0;
 
     if (files.length === 0) {
       return NextResponse.json({ error: 'No parseable files found in directory' }, { status: 404 });
     }
 
     // Parse project
+    const t1 = Date.now();
     const projectData = parseProject(files);
+    const parseMs = Date.now() - t1;
+
+    console.log(`[HailMary] Scan: ${scanMs}ms (${counters.scanned} files, ${counters.skipped} skipped) | Parse: ${parseMs}ms | Agents: ${projectData.agents.length}`);
 
     return NextResponse.json({
       data: projectData,

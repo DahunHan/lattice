@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { ProjectData } from "@/lib/types";
-import { exportJSON, exportMermaid, exportPNG, exportSVG } from "@/lib/export/exportGraph";
+import { exportJSON, exportMermaid, exportPNG, exportSVG, generateMermaidContent } from "@/lib/export/exportGraph";
+import { useProjectStore } from "@/store/useProjectStore";
 
 interface ExportMenuProps {
   project: ProjectData;
@@ -14,9 +15,11 @@ const EXPORT_OPTIONS = [
   { id: 'mermaid', label: 'Mermaid', icon: '◇', desc: 'Diagram syntax' },
   { id: 'png', label: 'PNG', icon: '▣', desc: 'Current viewport' },
   { id: 'svg', label: 'SVG', icon: '◈', desc: 'Current viewport' },
+  { id: 'readme', label: 'Update README', icon: '▤', desc: 'Inject Mermaid diagram' },
 ] as const;
 
 export function ExportMenu({ project, graphElement }: ExportMenuProps) {
+  const projectPath = useProjectStore((s) => s.projectPath);
   const [open, setOpen] = useState(false);
   const [exporting, setExporting] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -57,6 +60,20 @@ export function ExportMenu({ project, graphElement }: ExportMenuProps) {
         case 'svg':
           if (graphElement) await exportSVG(graphElement, name);
           break;
+        case 'readme':
+          if (projectPath) {
+            const mermaid = generateMermaidContent(project);
+            const res = await fetch('/api/readme', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ path: projectPath, mermaid }),
+            });
+            const json = await res.json();
+            if (json.success) {
+              console.log('[HailMary] README.md updated:', json.path);
+            }
+          }
+          break;
       }
     } catch (err) {
       console.error('Export failed:', err);
@@ -64,7 +81,7 @@ export function ExportMenu({ project, graphElement }: ExportMenuProps) {
       setExporting(null);
       setOpen(false);
     }
-  }, [project, graphElement]);
+  }, [project, graphElement, projectPath]);
 
   return (
     <div ref={menuRef} className="relative">
@@ -94,7 +111,7 @@ export function ExportMenu({ project, graphElement }: ExportMenuProps) {
             <button
               key={opt.id}
               onClick={() => handleExport(opt.id)}
-              disabled={exporting !== null || ((opt.id === 'png' || opt.id === 'svg') && !graphElement)}
+              disabled={exporting !== null || ((opt.id === 'png' || opt.id === 'svg') && !graphElement) || (opt.id === 'readme' && !projectPath)}
               className="
                 w-full flex items-center gap-3 px-4 py-2.5 text-left
                 text-[11px] text-[#9999BB] hover:text-[#E0E0F0] hover:bg-[#1E1E3A]/50

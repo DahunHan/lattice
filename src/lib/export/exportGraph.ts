@@ -134,6 +134,44 @@ function downloadFile(content: string, filename: string, mimeType: string): void
   URL.revokeObjectURL(url);
 }
 
+/** Generate raw Mermaid syntax (no file download) */
+export function generateMermaidContent(project: ProjectData): string {
+  const lines: string[] = ['graph TD'];
+
+  for (const agent of project.agents) {
+    if (agent.status === 'archived') continue;
+    const id = mermaidId(agent.id);
+    const label = agent.name.replace(/"/g, "'");
+    const shape = agent.isOrchestrator ? `${id}{{"${label}"}}` : `${id}["${label}"]`;
+    lines.push(`  ${shape}`);
+  }
+
+  lines.push('');
+
+  for (const edge of project.edges) {
+    const src = mermaidId(edge.source);
+    const tgt = mermaidId(edge.target);
+    const label = edge.label ? `|${edge.label}|` : '';
+
+    if (edge.type === 'supervision') {
+      lines.push(`  ${src} -.->${label} ${tgt}`);
+    } else if (edge.type === 'data-flow') {
+      lines.push(`  ${src} ==>${label} ${tgt}`);
+    } else {
+      lines.push(`  ${src} -->${label} ${tgt}`);
+    }
+  }
+
+  const orchestrators = project.agents.filter(a => a.isOrchestrator && a.status !== 'archived');
+  if (orchestrators.length > 0) {
+    lines.push('');
+    lines.push(`  classDef orchestrator fill:#F5A623,stroke:#F5A623,color:#000`);
+    lines.push(`  class ${orchestrators.map(a => mermaidId(a.id)).join(',')} orchestrator`);
+  }
+
+  return lines.join('\n');
+}
+
 function slugName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'project';
 }

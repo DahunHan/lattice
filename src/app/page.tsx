@@ -84,12 +84,15 @@ export default function LandingPage() {
     setIsLoading(true);
     setError(null);
     try {
+      const t0 = performance.now();
       const res = await fetch("/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path: path.trim() }),
       });
       const json = await res.json();
+      const scanMs = Math.round(performance.now() - t0);
+      console.log(`[HailMary] Scan completed in ${scanMs}ms — ${json.filesScanned} files scanned, ${json.filesSkipped ?? 0} skipped`);
       if (!res.ok) {
         setError(json.error || "Scan failed");
         return;
@@ -299,21 +302,18 @@ export default function LandingPage() {
           {/* Supported formats — collapsible */}
           <FormatHints showInitially={false} />
 
+          {/* Scanning indicator — outside AnimatePresence for reliability */}
+          {isLoading && (
+            <div className="mt-4 px-4 py-3 rounded-xl bg-[#4A9EE0]/10 border border-[#4A9EE0]/20 text-[#4A9EE0] text-sm flex items-center gap-3">
+              <svg className="animate-spin h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10" strokeDasharray="31.4" strokeDashoffset="10" />
+              </svg>
+              Scanning files — reading .md, .py, .yaml and parsing agent definitions...
+            </div>
+          )}
+
           {/* Error / Status */}
           <AnimatePresence>
-            {isLoading && (
-              <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="mt-4 px-4 py-3 rounded-xl bg-[#4A9EE0]/10 border border-[#4A9EE0]/20 text-[#4A9EE0] text-sm flex items-center gap-3"
-              >
-                <svg className="animate-spin h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <circle cx="12" cy="12" r="10" strokeDasharray="31.4" strokeDashoffset="10" />
-                </svg>
-                Scanning files &mdash; reading .md, .py, .yaml files and parsing agent definitions...
-              </motion.div>
-            )}
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -8 }}

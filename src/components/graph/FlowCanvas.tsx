@@ -10,6 +10,7 @@ import {
   useEdgesState,
   type Node,
   type Edge,
+  type Connection,
   BackgroundVariant,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -50,9 +51,10 @@ interface FlowCanvasProps {
   initialNodes: Node<AgentNodeData>[];
   initialEdges: Edge[];
   onContainerRef?: (el: HTMLElement | null) => void;
+  onManualConnect?: (connection: Connection) => void;
 }
 
-export function FlowCanvas({ initialNodes, initialEdges, onContainerRef }: FlowCanvasProps) {
+export function FlowCanvas({ initialNodes, initialEdges, onContainerRef, onManualConnect }: FlowCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -82,6 +84,15 @@ export function FlowCanvas({ initialNodes, initialEdges, onContainerRef }: FlowC
     selectAgent(null);
   }, [selectAgent]);
 
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      if (onManualConnect && connection.source && connection.target) {
+        onManualConnect(connection);
+      }
+    },
+    [onManualConnect]
+  );
+
   // Update node selection state
   const styledNodes = useMemo(
     () =>
@@ -102,6 +113,7 @@ export function FlowCanvas({ initialNodes, initialEdges, onContainerRef }: FlowC
       edges={edges}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
       onNodeClick={onNodeClick}
       onPaneClick={onPaneClick}
       nodeTypes={nodeTypes}

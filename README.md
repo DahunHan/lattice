@@ -57,7 +57,20 @@ Your project folder          HailMary
 - Custom nodes colored by model family (Haiku, Sonnet, Opus, Python)
 - Three edge types: pipeline flow (solid blue), supervision (dashed orange), data flow (gray)
 - Click any agent to open a detail panel with role, model, script, connections, and instructions
+- **Draw manual edges** — drag between nodes to add missing connections
+- **Agent notes** — annotate any agent with persisted notes
 - Search and filter agents in real-time
+
+### Agent Health
+- Green/amber/red health dots on every agent node
+- Script existence check — does the file actually exist?
+- Staleness detection — warns if a script hasn't been modified in 30+ days
+- Detailed health info in the agent detail panel
+
+### Git Integration
+- Shows last commit info per agent — who changed it, when, what commit message
+- Automatic detection for git repositories
+- "Changed 2 hours ago by @han — Fix sourcing timeout"
 
 ### Live Monitoring
 - Polls pipeline logs for real-time agent status
@@ -80,6 +93,7 @@ Your project folder          HailMary
 - **Mermaid** — Diagram syntax that renders in GitHub, Notion, mermaid.live
 - **PNG** — High-res screenshot of the graph with dark background
 - **SVG** — Vector image for docs, presentations, print
+- **Update README** — One click to inject a Mermaid diagram into your project's README.md
 
 ### Snapshot Diff
 - Save snapshots of your agent architecture at any point
@@ -219,6 +233,10 @@ Phase 1 (one-way visualization) is fully built and functional:
 - [x] Snapshot diff — save snapshots, compare, visual diff badges on nodes
 - [x] Export — PNG, SVG, JSON, Mermaid diagram
 - [x] CLI distribution — `npx hailmary` with auto-scan, standalone build
+- [x] Manual edges and agent notes — draw missing connections, annotate agents
+- [x] Agent health check — script existence, staleness detection
+- [x] Git integration — last commit info per agent
+- [x] Auto-update README — inject Mermaid diagram into project README.md
 - [ ] File watcher — sub-second monitoring updates via fs.watch
 
 ### Phase 3: Agent IDE Companion
