@@ -29,7 +29,7 @@ Workflow: Architect -> Frontend Dev -> (Design Reviewer + Code Reviewer in paral
 Workflow: Dogfood Tester -> (Docs Writer + Community Manager in parallel) -> Content Creator -> Growth Tracker
 
 ## 3. Technical Stack
-- **Framework:** Next.js 14+ (App Router)
+- **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript (strict, no `any`)
 - **Styling:** Tailwind CSS
 - **Graph:** React Flow (@xyflow/react)
