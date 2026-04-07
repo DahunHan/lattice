@@ -179,16 +179,39 @@ export async function POST(req: NextRequest) {
     const logDirName = customLogDir ?? 'logs';
     const logsDir = join(basePath, logDirName);
 
-    // If custom dir doesn't exist, try auto-discovering
+    // If log dir doesn't exist, auto-discover — check immediate AND one level deep
     let effectiveLogsDir = logsDir;
     if (!existsSync(logsDir) && !customLogDir) {
       const candidates = ['logs', 'log', 'output', 'runs', '.logs', 'pipeline_logs'];
+      let found = false;
+
+      // Check immediate subdirectories first
       for (const candidate of candidates) {
         const candidatePath = join(basePath, candidate);
         if (existsSync(candidatePath)) {
           effectiveLogsDir = candidatePath;
+          found = true;
           break;
         }
+      }
+
+      // If not found, check one level deeper (e.g., HailMary/logs/ inside HailMary/)
+      if (!found) {
+        try {
+          const subdirs = await readdir(basePath, { withFileTypes: true });
+          for (const sub of subdirs) {
+            if (!sub.isDirectory() || sub.name.startsWith('.') || sub.name === 'node_modules') continue;
+            for (const candidate of candidates) {
+              const candidatePath = join(basePath, sub.name, candidate);
+              if (existsSync(candidatePath)) {
+                effectiveLogsDir = candidatePath;
+                found = true;
+                break;
+              }
+            }
+            if (found) break;
+          }
+        } catch { /* ignore */ }
       }
     }
 

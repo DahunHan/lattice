@@ -42,10 +42,24 @@ export async function POST(req: NextRequest) {
 
     const discovered: DiscoveredLog[] = [];
 
-    // Check each candidate directory
-    for (const dirName of LOG_DIR_CANDIDATES) {
-      const dirPath = join(basePath, dirName);
-      if (!existsSync(dirPath)) continue;
+    // Collect all paths to check: immediate + one level deep
+    const searchPaths: { base: string; prefix: string }[] = [
+      { base: basePath, prefix: '' },
+    ];
+    try {
+      const subdirs = await readdir(basePath, { withFileTypes: true });
+      for (const sub of subdirs) {
+        if (sub.isDirectory() && !sub.name.startsWith('.') && sub.name !== 'node_modules') {
+          searchPaths.push({ base: join(basePath, sub.name), prefix: sub.name + '/' });
+        }
+      }
+    } catch { /* ignore */ }
+
+    // Check each candidate directory at each search path
+    for (const { base, prefix } of searchPaths) {
+      for (const dirName of LOG_DIR_CANDIDATES) {
+        const dirPath = join(base, dirName);
+        if (!existsSync(dirPath)) continue;
 
       try {
         const entries = await readdir(dirPath);
@@ -78,12 +92,13 @@ export async function POST(req: NextRequest) {
             : '*.log';
 
           discovered.push({
-            directory: dirName,
+            directory: prefix + dirName,
             files: logFiles.slice(0, 5), // Top 5 most recent
             pattern,
           });
         }
       } catch { /* skip inaccessible dirs */ }
+    }
     }
 
     return NextResponse.json({
