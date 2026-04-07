@@ -1,8 +1,13 @@
 # HailMary
 
-**See your agents. Understand the flow.**
+**See your agents. Understand the flow. Don't lose track.**
 
-HailMary is an open-source dashboard that automatically visualizes agent workflows from your project files. Point it at a folder or drop your markdown files — it reads your agent definitions, maps the relationships, and renders an interactive graph.
+HailMary is an open-source dashboard that automatically visualizes agent workflows from your project files. Point it at a folder or drop your markdown files — it reads your agent definitions, maps the relationships, and renders an interactive graph. Zero config required.
+
+<!-- Add a screenshot of the graph view here -->
+<!-- ![HailMary Dashboard](docs/screenshot-graph.png) -->
+
+---
 
 ## The Problem
 
@@ -12,10 +17,21 @@ HailMary solves this by **auto-reading your project** and **drawing the workflow
 
 ## How It Works
 
+```
+Your project folder          HailMary
+                              
+  AGENT_MAP.md ──────┐        ┌──────────────────────┐
+  .claude/agents/ ───┤        │                      │
+  CLAUDE.md ─────────┼──────> │  7 parsers with      │ ────> Interactive
+  SYSTEM-ARCH.md ────┤        │  heuristic fallback  │       node graph
+  SKILL.md ──────────┤        │                      │
+  Any .md ───────────┘        └──────────────────────┘
+```
+
 1. **Scan** — Point HailMary at your project folder, or drag-and-drop `.md` files
-2. **Parse** — It detects agents from `AGENT_MAP.md`, `.claude/agents/*.md`, `SKILL.md` files, and even unstructured markdown
+2. **Parse** — 7 specialized parsers detect agents from structured and unstructured markdown
 3. **Visualize** — An interactive node graph shows every agent, their model, role, pipeline order, and connections
-4. **Monitor** — Toggle live monitoring to see which agent is running right now, with real-time log streaming
+4. **Monitor** — Toggle live monitoring to see which agent is running, with real-time log streaming
 
 ## What It Detects
 
@@ -23,28 +39,47 @@ HailMary solves this by **auto-reading your project** and **drawing the workflow
 |--------|-----------------|
 | `AGENT_MAP.md` | Agent names, roles, models, scripts, status (CSV or markdown table) |
 | `.claude/agents/*.md` | Claude Code harness agent definitions with frontmatter |
-| `SYSTEM-ARCHITECTURE.MD` | Pipeline phases, execution order, data flow edges |
+| `SYSTEM-ARCHITECTURE.md` | Pipeline phases, execution order, data flow edges |
 | `CLAUDE.md` | Project name, goal, orchestration relationships |
 | `.agents/skills/*/SKILL.md` | Agent descriptions and full instruction sets |
 | Any `.md` file | Heuristic detection of agents and relationships |
 
-## Live Monitoring (Tier 1)
+## Features
 
-If your project writes pipeline logs to a `logs/` directory (like `pipeline_YYYYMMDD.log`), HailMary can poll those files and show real-time status:
+### Interactive Graph
+- Hierarchical layout with Dagre — orchestrators on top, pipeline flows left-to-right
+- Custom nodes colored by model family (Haiku, Sonnet, Opus, Python)
+- Three edge types: pipeline flow (solid blue), supervision (dashed orange), data flow (gray)
+- Click any agent to open a detail panel with role, model, script, connections, and instructions
+- Search and filter agents in real-time
 
-- Which agent is currently running (pulsing glow)
-- Which agents completed successfully (green indicator)
-- Which agents failed (red indicator)
-- Execution duration per agent
-- Streaming log viewer with expandable timeline
+### Live Monitoring
+- Polls pipeline logs for real-time agent status
+- Pulsing glow on running agents, green/red indicators for success/failure
+- Timeline bar with progress, duration tracking, and streaming log viewer
+- Zero config — if your project writes structured logs to `logs/`, monitoring just works
 
-**Zero config needed** — if your project writes structured logs, monitoring just works.
+### Persistence
+- Projects are saved to localStorage — refresh the page, your graph is still there
+- "Continue with [project]" quick-load on the landing page
+- UI state (archived toggle, paused agents, monitoring) persists across sessions
+
+### Error Recovery
+- Each parser is individually wrapped — one malformed file won't crash the whole scan
+- Parse warnings shown as a dismissible banner with detailed warning count
+- Graceful degradation: partial results are always returned
+
+### Security (Local-First)
+- No data leaves your machine — no external APIs, no telemetry
+- Symlink validation prevents path traversal
+- System directory blocking (Windows, /etc, /proc, /sys)
+- File size limits (1MB per file, 200 files max)
 
 ## Quick Start
 
 ```bash
 git clone https://github.com/your-username/hailmary.git
-cd hailmary
+cd hailmary/HailMary
 npm install
 npm run dev
 ```
@@ -53,44 +88,101 @@ Open [http://localhost:3000](http://localhost:3000) and either:
 - **Drag & drop** your project's `.md` files onto the landing page
 - **Enter a folder path** and click Scan
 
+### Try the Example
+
+HailMary ships with a sample harness in `examples/sample-harness/`. Scan that folder to see a 6-agent pipeline with orchestrator supervision, pipeline phases, and log-based monitoring.
+
 ## Tech Stack
 
-- **Next.js 14+** (App Router)
-- **React Flow** (@xyflow/react) — interactive node graph
-- **Tailwind CSS** — dark theme with glassmorphism
-- **Framer Motion** — smooth animations
-- **Dagre** — automatic hierarchical layout
-- **Zustand** — lightweight state management
-- **TypeScript** — strict mode throughout
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router) |
+| Graph | React Flow (@xyflow/react) |
+| Layout | Dagre (@dagrejs/dagre) |
+| State | Zustand (with persist middleware) |
+| Animation | Framer Motion |
+| Styling | Tailwind CSS v4 |
+| Language | TypeScript (strict mode) |
+| Testing | Vitest (61 tests) |
 
 ## Project Structure
 
 ```
 src/
-  app/                    # Next.js pages and API routes
-    api/scan/             # POST: scan a folder for .md files
-    api/status/           # POST: poll pipeline log status
-    graph/                # Interactive graph visualization page
+  app/                          # Next.js pages and API routes
+    api/scan/                   #   POST: scan a folder for .md files
+    api/status/                 #   POST: poll pipeline log status
+    graph/                      #   Interactive graph visualization page
   components/
-    graph/nodes/          # Custom React Flow nodes (Agent, Orchestrator)
-    graph/edges/          # Custom edges (Pipeline, Supervision, DataFlow)
-    panels/               # Detail panel, project overview, legend, live timeline
+    graph/
+      nodes/                    #   AgentNode, OrchestratorNode
+      edges/                    #   PipelineEdge, SupervisionEdge, DataFlowEdge
+      FlowCanvas.tsx            #   React Flow wrapper
+    panels/                     #   AgentDetailPanel, ProjectOverview, Legend, LiveTimeline
   lib/
-    parser/               # 7 parsers: agentMap, architecture, claude, claudeAgents, skill, heuristic, markdownUtils
-    graph/                # Graph builder + dagre layout engine
-    theme/                # Color palette and model-family theming
-  store/                  # Zustand state management
-  hooks/                  # useAgentStatus polling hook
+    parser/                     # 7 parsers + orchestrator
+      agentMapParser.ts         #   CSV and markdown table parsing
+      architectureParser.ts     #   Pipeline phases and edge detection
+      claudeAgentsParser.ts     #   .claude/agents/*.md with frontmatter
+      claudeParser.ts           #   CLAUDE.md metadata extraction
+      skillParser.ts            #   SKILL.md instruction parsing
+      heuristicParser.ts        #   Fallback: bold names, arrow patterns, verbal cues
+      markdownUtils.ts          #   Shared: frontmatter, table, CSV utilities
+      index.ts                  #   Orchestrator: priority-based parsing with error recovery
+    graph/
+      buildGraph.ts             #   Filters + transforms agents into React Flow nodes/edges
+      layoutEngine.ts           #   Dagre hierarchical layout computation
+    theme/colors.ts             #   Model-family color palette
+    types.ts                    #   Full TypeScript type definitions
+  store/useProjectStore.ts      # Zustand store with localStorage persistence
+  hooks/useAgentStatus.ts       # Live monitoring polling hook
 ```
+
+## Design
+
+Dark theme with glassmorphism. Information density over whitespace — this is a developer tool, not a marketing site.
+
+| Element | Color |
+|---------|-------|
+| Background | `#0A0A1B` |
+| Surface | `#12122A` |
+| Border | `#1E1E3A` |
+| Text | `#E0E0F0` |
+| Accent | `#F5A623` (orange) |
+| Haiku | `#4A9EE0` (blue) |
+| Sonnet | `#2ECC71` (green) |
+| Opus | `#9B59B6` (purple) |
+
+## Current Status: Phase 1 Complete
+
+Phase 1 (one-way visualization) is fully built and functional:
+
+- [x] File upload and folder scanning
+- [x] Multi-format parsing (7 parsers + heuristic fallback)
+- [x] Interactive graph visualization with React Flow
+- [x] Agent detail panel with full information
+- [x] Search, filter, and archived agent toggle
+- [x] Live monitoring with log polling
+- [x] Persistence across page refreshes
+- [x] Parser error recovery with warnings
+- [x] Onboarding hints for new users
+- [x] Security: symlink validation, directory blocking, file size limits
 
 ## Roadmap
 
-- [ ] **Phase 1** (current): One-way visualization — read project, draw dashboard
-- [ ] **Phase 2**: Bidirectional editing — add/modify agents from the dashboard
-- [ ] **Tier 2 monitoring**: Webhook-based real-time events (sub-second updates)
-- [ ] **Tier 3 monitoring**: Direct integration with Claude Code harness task state
-- [ ] Export graph as PNG/SVG for documentation
-- [ ] Shareable read-only URLs
+### Phase 2: From Map to Dashboard
+- [ ] Framework plugins — parser support for CrewAI, LangGraph, AutoGen
+- [ ] Snapshot diff — compare scans, highlight added/removed/changed agents
+- [ ] Export — PNG, SVG, JSON, Mermaid diagram
+- [ ] CLI distribution — `npx hailmary` for zero-install local use
+- [ ] File watcher — sub-second monitoring updates via fs.watch
+
+### Phase 3: Agent IDE Companion
+- [ ] Bidirectional editing — add/modify agents from the dashboard, writes back to files
+- [ ] Execution replay — record and step through full pipeline runs
+- [ ] Cost tracking — token usage and cost-per-agent from logs
+- [ ] VS Code / Cursor extension — side panel graph while you code
+- [ ] Tauri desktop app — native experience with system tray
 
 ## Built With a Harness
 
@@ -104,8 +196,12 @@ HailMary itself is built using a 5-agent development harness:
 | Code Reviewer | TypeScript correctness, performance, security |
 | QA Tester | Parser validation, edge cases, cross-reference |
 
-You can scan HailMary's own folder to see this harness visualized.
+Scan HailMary's own folder to see this harness visualized.
 
 ## License
 
 MIT
+
+## Contributing
+
+HailMary is open source and welcomes contributions. The biggest impact areas right now are framework parser plugins (CrewAI, LangGraph, AutoGen) and export functionality.
