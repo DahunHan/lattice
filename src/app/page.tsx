@@ -21,7 +21,7 @@ export default function LandingPage() {
   const handleFiles = useCallback(
     async (files: RawFile[]) => {
       if (files.length === 0) {
-        setError("No .md files found");
+        setError("No parseable files found (.md, .py, .yaml, .json)");
         return;
       }
       setIsLoading(true);
@@ -46,9 +46,10 @@ export default function LandingPage() {
   const handleFileInput = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const items = Array.from(e.target.files ?? []);
-      const mdFiles = items.filter((f) => f.name.endsWith(".md"));
+      const validExts = ['.md', '.py', '.yaml', '.yml', '.json'];
+      const validFiles = items.filter((f) => validExts.some(ext => f.name.endsWith(ext)));
       const rawFiles: RawFile[] = await Promise.all(
-        mdFiles.map(async (f) => ({
+        validFiles.map(async (f) => ({
           name: f.name,
           content: await f.text(),
         }))
@@ -64,9 +65,10 @@ export default function LandingPage() {
       e.preventDefault();
       setIsDragging(false);
       const items = Array.from(e.dataTransfer.files);
-      const mdFiles = items.filter((f) => f.name.endsWith(".md"));
+      const validExts = ['.md', '.py', '.yaml', '.yml', '.json'];
+      const validFiles = items.filter((f) => validExts.some(ext => f.name.endsWith(ext)));
       const rawFiles: RawFile[] = await Promise.all(
-        mdFiles.map(async (f) => ({
+        validFiles.map(async (f) => ({
           name: f.name,
           content: await f.text(),
         }))
@@ -147,7 +149,7 @@ export default function LandingPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".md"
+            accept=".md,.py,.yaml,.yml,.json"
             multiple
             onChange={handleFileInput}
             className="sr-only"
@@ -200,10 +202,10 @@ export default function LandingPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-[#E0E0F0]">
-                  Drop .md files here
+                  Drop project files here
                 </p>
                 <p className="text-xs text-[#9999BB] mt-1">
-                  AGENT_MAP.md, SYSTEM-ARCHITECTURE.MD, CLAUDE.md, SKILL.md
+                  .md, .py, .yaml, .json — any agent framework
                 </p>
               </div>
             </div>
@@ -357,6 +359,11 @@ const FORMATS = [
   { name: 'SYSTEM-ARCHITECTURE.md', desc: 'Pipeline phases & data flow' },
   { name: 'CLAUDE.md', desc: 'Project metadata & goals' },
   { name: 'SKILL.md', desc: 'Agent skill instructions' },
+  { name: 'agents.yaml / tasks.yaml', desc: 'CrewAI agent & task configs' },
+  { name: '*.py (CrewAI)', desc: '@CrewBase crews, Process type detection' },
+  { name: '*.py (LangGraph)', desc: 'StateGraph nodes, edges, conditional routing' },
+  { name: '*.py (AutoGen)', desc: 'AssistantAgent, GroupChat, Swarm handoffs' },
+  { name: '*.py (OpenAI Agents)', desc: 'Agent definitions with handoff graphs' },
   { name: 'Any .md', desc: 'Heuristic detection of agents & relationships' },
 ];
 

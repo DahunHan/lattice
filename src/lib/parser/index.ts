@@ -4,6 +4,10 @@ import { isArchitectureDoc, parsePipeline, parseEdges } from './architecturePars
 import { isClaudeMd, parseClaudeMd } from './claudeParser';
 import { isClaudeAgentFile, parseClaudeAgentFile, parseOrchestrationTable } from './claudeAgentsParser';
 import { isSkillFile, parseSkillFile, enrichAgentsWithSkills } from './skillParser';
+import { isCrewAIYaml, isCrewAIPython, parseCrewAIAgentsYaml, parseCrewAITasksYaml, parseCrewAIPython } from './crewaiParser';
+import { isLangGraph, parseLangGraph } from './langgraphParser';
+import { isAutoGen, parseAutoGen } from './autogenParser';
+import { isOpenAIAgents, parseOpenAIAgents } from './openaiAgentsParser';
 import { detectAgentsHeuristic, detectEdgesHeuristic } from './heuristicParser';
 
 export interface RawFile {
@@ -23,6 +27,8 @@ export function parseProject(files: RawFile[]): ProjectData {
   const warnings: ParseWarning[] = [];
   const skills: ReturnType<typeof parseSkillFile>[] = [];
   const claudeMdFiles: RawFile[] = [];
+  const crewaiTaskFiles: RawFile[] = [];
+  const crewaiPyFiles: RawFile[] = [];
   let metadata = { name: '', goal: null as string | null, description: null as string | null };
 
   // Pre-filter: skip workspace artifacts and build output
@@ -69,7 +75,42 @@ export function parseProject(files: RawFile[]): ProjectData {
       else if (isArchitectureDoc(file.content, file.name)) {
         parsedFiles.push({ filename: file.name, path: filePath, type: 'architecture' });
       }
-      // 6. Unmatched — will try heuristic later
+      // 6. CrewAI YAML configs (agents.yaml, tasks.yaml)
+      else if (isCrewAIYaml(file.content, filePath)) {
+        if (/agents/i.test(file.name)) {
+          const parsed = parseCrewAIAgentsYaml(file.content);
+          agents = mergeAgents(agents, parsed);
+        }
+        crewaiTaskFiles.push(file);
+        parsedFiles.push({ filename: file.name, path: filePath, type: 'crewai' });
+      }
+      // 7. CrewAI Python files
+      else if (isCrewAIPython(file.content, filePath)) {
+        crewaiPyFiles.push(file);
+        parsedFiles.push({ filename: file.name, path: filePath, type: 'crewai' });
+      }
+      // 8. LangGraph Python/JSON files
+      else if (isLangGraph(file.content, filePath)) {
+        const result = parseLangGraph(file.content, filePath);
+        agents = mergeAgents(agents, result.agents);
+        edges = mergeEdges(edges, result.edges);
+        parsedFiles.push({ filename: file.name, path: filePath, type: 'langgraph' });
+      }
+      // 9. AutoGen Python files
+      else if (isAutoGen(file.content, filePath)) {
+        const result = parseAutoGen(file.content, filePath);
+        agents = mergeAgents(agents, result.agents);
+        edges = mergeEdges(edges, result.edges);
+        parsedFiles.push({ filename: file.name, path: filePath, type: 'autogen' });
+      }
+      // 10. OpenAI Agents SDK Python files
+      else if (isOpenAIAgents(file.content, filePath)) {
+        const result = parseOpenAIAgents(file.content, filePath);
+        agents = mergeAgents(agents, result.agents);
+        edges = mergeEdges(edges, result.edges);
+        parsedFiles.push({ filename: file.name, path: filePath, type: 'openai-agents' });
+      }
+      // 11. Unmatched — will try heuristic later
       else {
         unmatched.push(file);
       }
@@ -109,6 +150,26 @@ export function parseProject(files: RawFile[]): ProjectData {
       edges = mergeEdges(edges, orchEdges);
     } catch (e) {
       warnings.push({ file: claudeFile.name, parser: 'orchestration', message: String(e) });
+    }
+  }
+
+  // CrewAI post-processing: parse task edges and Python process type
+  for (const taskFile of crewaiTaskFiles) {
+    if (/tasks/i.test(taskFile.name)) {
+      try {
+        const taskEdges = parseCrewAITasksYaml(taskFile.content, agents);
+        edges = mergeEdges(edges, taskEdges);
+      } catch (e) {
+        warnings.push({ file: taskFile.name, parser: 'crewai-tasks', message: String(e) });
+      }
+    }
+  }
+  for (const pyFile of crewaiPyFiles) {
+    try {
+      const pyEdges = parseCrewAIPython(pyFile.content, agents);
+      edges = mergeEdges(edges, pyEdges);
+    } catch (e) {
+      warnings.push({ file: pyFile.name, parser: 'crewai-python', message: String(e) });
     }
   }
 

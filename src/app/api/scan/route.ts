@@ -17,7 +17,12 @@ const MAX_FILE_SIZE = 1024 * 1024; // 1MB
 // Sensitive paths that should never be scanned
 const BLOCKED_PATHS = ['/etc', '/var', '/proc', '/sys', 'C:\\Windows', 'C:\\Program Files'];
 
-async function findMdFiles(
+// File extensions to scan for agent definitions
+const SCANNABLE_EXTENSIONS = new Set(['.md', '.py', '.yaml', '.yml']);
+// Only specific JSON files are relevant (not package.json, tsconfig.json, etc.)
+const ALLOWED_JSON_FILES = new Set(['langgraph.json']);
+
+async function findProjectFiles(
   dir: string,
   baseDir: string,
   depth: number,
@@ -48,9 +53,10 @@ async function findMdFiles(
     if (entry.isDirectory()) {
       const isAllowedDotDir = entry.name === '.agents' || entry.name === '.claude';
       if (isAllowedDotDir || (!IGNORE_DIRS.has(entry.name) && !entry.name.startsWith('.'))) {
-        await findMdFiles(fullPath, baseDir, depth + 1, results);
+        await findProjectFiles(fullPath, baseDir, depth + 1, results);
       }
-    } else if (extname(entry.name).toLowerCase() === '.md') {
+    } else if (SCANNABLE_EXTENSIONS.has(extname(entry.name).toLowerCase()) ||
+               ALLOWED_JSON_FILES.has(entry.name.toLowerCase())) {
       try {
         const stats = await stat(fullPath);
         if (stats.size > MAX_FILE_SIZE) continue;
@@ -100,12 +106,12 @@ export async function POST(req: NextRequest) {
     // Resolve symlinks at root level too
     const realRoot = await realpath(resolvedPath);
 
-    // Find all MD files
+    // Find all project files (md, py, yaml, yml, json)
     const files: { name: string; content: string; path: string }[] = [];
-    await findMdFiles(realRoot, realRoot, 0, files);
+    await findProjectFiles(realRoot, realRoot, 0, files);
 
     if (files.length === 0) {
-      return NextResponse.json({ error: 'No .md files found in directory' }, { status: 404 });
+      return NextResponse.json({ error: 'No parseable files found in directory' }, { status: 404 });
     }
 
     // Parse project

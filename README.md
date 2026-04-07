@@ -42,6 +42,12 @@ Your project folder          HailMary
 | `SYSTEM-ARCHITECTURE.md` | Pipeline phases, execution order, data flow edges |
 | `CLAUDE.md` | Project name, goal, orchestration relationships |
 | `.agents/skills/*/SKILL.md` | Agent descriptions and full instruction sets |
+| `agents.yaml` / `tasks.yaml` | **CrewAI** agent configs, task dependencies, process type |
+| `*.py` (CrewAI) | `@CrewBase` crews, `Process.sequential` / `.hierarchical` |
+| `*.py` (LangGraph) | `StateGraph` nodes, `add_edge`, conditional routing |
+| `*.py` (AutoGen) | `AssistantAgent`, `GroupChat` transitions, `Swarm` handoffs |
+| `*.py` (OpenAI Agents) | `Agent` definitions, `handoffs` graphs |
+| `langgraph.json` | LangGraph project config |
 | Any `.md` file | Heuristic detection of agents and relationships |
 
 ## Features
@@ -103,7 +109,7 @@ HailMary ships with a sample harness in `examples/sample-harness/`. Scan that fo
 | Animation | Framer Motion |
 | Styling | Tailwind CSS v4 |
 | Language | TypeScript (strict mode) |
-| Testing | Vitest (61 tests) |
+| Testing | Vitest (79 tests) |
 
 ## Project Structure
 
@@ -126,6 +132,10 @@ src/
       claudeAgentsParser.ts     #   .claude/agents/*.md with frontmatter
       claudeParser.ts           #   CLAUDE.md metadata extraction
       skillParser.ts            #   SKILL.md instruction parsing
+      crewaiParser.ts           #   CrewAI agents.yaml, tasks.yaml, crew.py
+      langgraphParser.ts        #   LangGraph StateGraph nodes and edges
+      autogenParser.ts          #   AutoGen agents, GroupChat, Swarm
+      openaiAgentsParser.ts     #   OpenAI Agents SDK definitions and handoffs
       heuristicParser.ts        #   Fallback: bold names, arrow patterns, verbal cues
       markdownUtils.ts          #   Shared: frontmatter, table, CSV utilities
       index.ts                  #   Orchestrator: priority-based parsing with error recovery
@@ -158,7 +168,7 @@ Dark theme with glassmorphism. Information density over whitespace — this is a
 Phase 1 (one-way visualization) is fully built and functional:
 
 - [x] File upload and folder scanning
-- [x] Multi-format parsing (7 parsers + heuristic fallback)
+- [x] Multi-format parsing (11 parsers + heuristic fallback)
 - [x] Interactive graph visualization with React Flow
 - [x] Agent detail panel with full information
 - [x] Search, filter, and archived agent toggle
@@ -171,7 +181,7 @@ Phase 1 (one-way visualization) is fully built and functional:
 ## Roadmap
 
 ### Phase 2: From Map to Dashboard
-- [ ] Framework plugins — parser support for CrewAI, LangGraph, AutoGen
+- [x] Framework plugins — CrewAI, LangGraph, AutoGen, OpenAI Agents SDK
 - [ ] Snapshot diff — compare scans, highlight added/removed/changed agents
 - [ ] Export — PNG, SVG, JSON, Mermaid diagram
 - [ ] CLI distribution — `npx hailmary` for zero-install local use
