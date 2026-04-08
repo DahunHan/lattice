@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { PipelineStatus, LogEntry } from "@/lib/types";
 
@@ -28,6 +28,33 @@ function formatTime(timestamp: string): string {
 
 export function LiveTimeline({ status, isPolling, lastUpdated }: LiveTimelineProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [expandedHeight, setExpandedHeight] = useState(240);
+  const isResizing = useRef(false);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isResizing.current = true;
+    const startY = e.clientY;
+    const startHeight = expandedHeight;
+
+    const onMove = (moveEvent: MouseEvent) => {
+      if (!isResizing.current) return;
+      const delta = startY - moveEvent.clientY;
+      setExpandedHeight(Math.max(120, Math.min(600, startHeight + delta)));
+    };
+
+    const onUp = () => {
+      isResizing.current = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+    };
+
+    document.body.style.cursor = 'row-resize';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, [expandedHeight]);
 
   if (!status) return null;
 
@@ -118,12 +145,19 @@ export function LiveTimeline({ status, isPolling, lastUpdated }: LiveTimelinePro
         {isExpanded && (
           <motion.div
             initial={{ height: 0 }}
-            animate={{ height: "min(240px, 30vh)" }}
+            animate={{ height: expandedHeight }}
             exit={{ height: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="glass-strong border-t border-[#1E1E3A] overflow-hidden"
+            className="glass-strong border-t border-[#1E1E3A] overflow-hidden relative"
           >
-            <div className="h-full overflow-y-auto px-6 py-3">
+            {/* Resize handle */}
+            <div
+              onMouseDown={handleResizeStart}
+              className="absolute top-0 left-0 right-0 h-2 cursor-row-resize hover:bg-[#F5A623]/10 active:bg-[#F5A623]/20 transition-colors z-10 flex items-center justify-center"
+            >
+              <div className="w-8 h-0.5 rounded-full bg-[#7777A0]/30" />
+            </div>
+            <div className="h-full overflow-y-auto px-6 py-3 pt-4">
               {/* Agent status pills */}
               <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-[#1E1E3A]">
                 {agentEntries.map(([id, s]) => (

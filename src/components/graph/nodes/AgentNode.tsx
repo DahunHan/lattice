@@ -29,7 +29,7 @@ const DIFF_BADGE: Record<string, { label: string; color: string; bg: string }> =
 };
 
 function AgentNodeComponent({ data }: NodeProps<Node<AgentNodeData>>) {
-  const { agent, isPaused, liveStatus, diffStatus, hasNote, health } = data;
+  const { agent, isPaused, isSelected, liveStatus, diffStatus, hasNote, health } = data;
   const colors = getAgentColors(agent);
   const isLive = liveStatus && liveStatus.state !== 'idle';
   const isRunning = liveStatus?.state === 'running';
@@ -90,10 +90,11 @@ function AgentNodeComponent({ data }: NodeProps<Node<AgentNodeData>>) {
         <div
           className="relative glass rounded-2xl px-5 py-4 min-w-[180px] max-w-[220px]"
           style={{
-            borderColor: isRunning ? `${RUN_STATE_COLORS.running}60` : isFailed ? `${RUN_STATE_COLORS.failed}60` : `${colors.border}40`,
-            borderWidth: isRunning ? "2px" : "1px",
+            borderColor: isSelected ? '#E0E0F0' : isRunning ? `${RUN_STATE_COLORS.running}60` : isFailed ? `${RUN_STATE_COLORS.failed}60` : `${colors.border}40`,
+            borderWidth: isSelected ? "2px" : isRunning ? "2px" : "1px",
             borderStyle: agent.status === "archived" ? "dashed" : "solid",
             background: `${colors.bg}CC`,
+            boxShadow: isSelected ? '0 0 0 3px rgba(224, 224, 240, 0.15)' : 'none',
           }}
         >
           {/* Agent name + status indicator */}

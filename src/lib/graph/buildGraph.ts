@@ -57,6 +57,8 @@ export function buildFlowGraph(
     groupNodes.push({
       id: `group_${groupName}`,
       type: 'group',
+      draggable: false,
+      selectable: false,
       position: { x: group.minX - padding, y: group.minY - padding },
       style: {
         width: group.maxX - group.minX + nodeWidth + padding * 2,

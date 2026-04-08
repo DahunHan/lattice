@@ -23,19 +23,19 @@
 }
 
 [data-theme="light"] {
-  --hm-bg: #F5F5FA;
-  --hm-surface: #FFFFFF;
-  --hm-surface-alt: #F0F0F8;
-  --hm-border: #D8D8E8;
-  --hm-border-light: #E8E8F0;
+  --hm-bg: #E8E8F0;
+  --hm-surface: #F0F0F5;
+  --hm-surface-alt: #E4E4EE;
+  --hm-border: #C8C8D8;
+  --hm-border-light: #D0D0DE;
   --hm-text: #1A1A2E;
-  --hm-text-dim: #6666AA;
-  --hm-accent: #E8941E;
-  --hm-accent-dim: rgba(232, 148, 30, 0.12);
-  --hm-text-muted: #8888AA;
-  --hm-glass: rgba(255, 255, 255, 0.85);
-  --hm-glass-strong: rgba(255, 255, 255, 0.95);
-  --hm-glass-border: rgba(0, 0, 0, 0.08);
+  --hm-text-dim: #555588;
+  --hm-accent: #D4850A;
+  --hm-accent-dim: rgba(212, 133, 10, 0.15);
+  --hm-text-muted: #7777A0;
+  --hm-glass: rgba(240, 240, 245, 0.85);
+  --hm-glass-strong: rgba(240, 240, 245, 0.95);
+  --hm-glass-border: rgba(0, 0, 0, 0.1);
 
   --hm-haiku: #2E7BBF;
   --hm-sonnet: #1EA85A;

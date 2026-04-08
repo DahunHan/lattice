@@ -59,13 +59,28 @@ Your project folder          Lattice
 
 ### Interactive Graph
 - Hierarchical layout with Dagre — orchestrators on top, pipeline flows left-to-right
-- Custom nodes colored by model family (10 model families — see Design section)
+- Custom nodes colored by model family — legend dynamically shows only models in use
 - Three edge types: pipeline flow (solid blue), supervision (dashed orange), data flow (gray)
-- **Team grouping** — agents with a Team/Group column are enclosed in labeled visual containers
+- **Team grouping** — agents with a Team/Group column are enclosed in labeled visual containers with agent counts
+- **Selected agent highlighting** — subtle white border + glow when navigating with Tab or clicking
 - Click any agent to open a resizable detail panel with role, model, script, connections, and instructions
 - **Draw manual edges** — drag between nodes to add missing connections
+- **Keyboard shortcuts** — `Esc` (close panel), `Tab` (cycle agents), `/` (search), `M` (monitor), `A` (archived)
 - **Agent notes** — annotate any agent with persisted notes
 - Search and filter agents in real-time
+
+### Workflow Pattern Detection
+Lattice auto-detects the 5 agentic workflow patterns and displays a clickable badge with confidence score:
+
+| Pattern | Icon | How it's detected |
+|---------|------|-------------------|
+| **Sequential** | → | Linear chain — each agent has ≤1 in-edge and ≤1 out-edge |
+| **Split & Merge** | ⟨⟩ | Hub node with 2+ fan-out or fan-in edges |
+| **Operator** | ∥ | Multiple isolated groups with no cross-connections |
+| **Agent Teams** | ⬡ | High edge density — mesh of interconnected agents |
+| **Headless** | ⚡ | Agents with schedule/cron fields, autonomous execution |
+
+Click the pattern badge to see per-team breakdown (e.g., "Dev: Sequential, Growth: Sequential").
 
 ### Bidirectional Editing
 - **Edit agent instructions** — click Edit on any agent's source file, modify in-place, preview diff before writing
