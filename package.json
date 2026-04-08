@@ -1,6 +1,6 @@
 {
   "name": "lattice-agents",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "license": "MIT",
   "description": "Interactive dashboard that visualizes agent workflows from your project files",
   "bin": {
