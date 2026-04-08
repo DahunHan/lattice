@@ -1,23 +1,35 @@
-# Lattice
+# Lattice — AI Agent Visualization Dashboard
 
-**See your agents. Understand the flow. Don't lose track.**
+**See every agent, connection, model, and cost in your multi-agent project. One command, full visibility.**
 
-Lattice is an open-source dashboard that automatically visualizes agent workflows from your project files. Point it at a folder or drop your files — it reads your agent definitions, maps the relationships, and renders an interactive graph. Zero config required. No AI models needed — pure regex-based parsing.
+[![npm version](https://img.shields.io/npm/v/lattice-agents)](https://www.npmjs.com/package/lattice-agents)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-88%20passing-brightgreen)]()
 
 <!-- Add a screenshot or GIF of the graph view here -->
-<!-- ![Lattice Dashboard](docs/screenshot-graph.png) -->
+<!-- ![Lattice Dashboard](docs/demo.gif) -->
 
 ```bash
 npx lattice-agents ./your-project
 ```
 
+> **Zero config. No API keys. No cloud. No AI models used. Your code never leaves your machine.**
+
 ---
 
-## The Problem
+## Why AI Agent Visualization Matters
 
-You're building with multiple AI agents — sourcing, analysis, verification, publishing, quality review. The project grows. Agents multiply. Data flows between them through files and APIs. Eventually the system is too complex to hold in your head, and the only way to understand it is to read every file.
+Modern AI projects run 5-50+ agents with complex handoffs, supervision chains, and shared memory. Without visualization, teams:
 
-Lattice solves this by **auto-reading your project** and **drawing the workflow for you**.
+- Can't see which agent feeds into which
+- Don't know what models each agent uses (or what they cost)
+- Miss broken connections and orphan agents
+- Waste hours manually mapping architecture in draw.io
+- Lose track of changes as agents multiply
+
+**Lattice solves this automatically.** Point it at your project folder and it parses your existing files — no SDK integration, no code changes, no manual diagramming.
+
+---
 
 ## How It Works
 
@@ -29,186 +41,169 @@ Your project folder          Lattice
   CLAUDE.md ─────────┤        │  11 parsers with     │
   SYSTEM-ARCH.md ────┼──────> │  heuristic fallback  │ ────> Interactive
   SKILL.md ──────────┤        │                      │       node graph
-  *.py (any framework)┤       │  No AI model needed  │
+  *.py (any framework)┤       │  Pure regex — no AI  │
   *.yaml ────────────┘        └──────────────────────┘
 ```
 
 1. **Scan** — Point Lattice at your project folder, or drag-and-drop files (.md, .py, .yaml, .json)
 2. **Parse** — 11 specialized parsers detect agents from structured and unstructured files
-3. **Visualize** — An interactive node graph shows every agent, their model, role, pipeline order, and connections
+3. **Visualize** — Interactive node graph with color-coded models, team grouping, and workflow patterns
 4. **Work** — Edit agents, monitor pipelines, export graphs, track changes — all from the dashboard
 
-## What It Detects
+---
 
-| Source | What's Extracted |
-|--------|-----------------|
-| `AGENT_MAP.md` | Agent names, roles, models, scripts, status, team/group (CSV or markdown table) |
-| `.claude/agents/*.md` | Claude Code harness agent definitions with frontmatter |
-| `SYSTEM-ARCHITECTURE.md` | Pipeline phases, execution order, data flow edges |
-| `CLAUDE.md` | Project name, goal, orchestration relationships |
-| `.agents/skills/*/SKILL.md` | Agent descriptions and full instruction sets |
-| `agents.yaml` / `tasks.yaml` | **CrewAI** agent configs, task dependencies, process type |
-| `*.py` (CrewAI) | `@CrewBase` crews, `@task` decorator agent mappings, `Process.sequential` / `.hierarchical` |
-| `*.py` (LangGraph) | `StateGraph` nodes, `add_edge`, conditional routing, `tools_condition` inference |
-| `*.py` (AutoGen) | `AssistantAgent`, `GroupChat` transitions, `Swarm` handoffs |
-| `*.py` (OpenAI Agents) | `Agent` definitions, multiline `handoffs` graphs |
-| `langgraph.json` | LangGraph project config |
-| Any `.md` file | Heuristic detection of agents and relationships |
+## Multi-Agent Framework Support
+
+Lattice includes **11 specialized parsers** — no AI models required, only fast regex-based scanning:
+
+| Framework | What's Parsed | Status |
+|-----------|--------------|--------|
+| **Claude Code** | `AGENT_MAP.md`, `.claude/agents/*.md`, `CLAUDE.md`, `SKILL.md` | Stable |
+| **CrewAI** | `agents.yaml`, `tasks.yaml`, `@CrewBase` crews, `@task` decorators | Stable |
+| **LangGraph** | `StateGraph` nodes, `add_edge`, conditional routing, `langgraph.json` | Stable |
+| **AutoGen** | `AssistantAgent`, `GroupChat` transitions, `Swarm` handoffs | Stable |
+| **OpenAI Agents SDK** | `Agent` definitions, multiline `handoffs` graphs | Stable |
+| **Heuristic** | Bold names, arrow patterns, verbal cues in any `.md` file | Stable |
+
+---
 
 ## Features
 
-### Interactive Graph
-- Hierarchical layout with Dagre — orchestrators on top, pipeline flows left-to-right
-- Custom nodes colored by model family — legend dynamically shows only models in use
-- Three edge types: pipeline flow (solid blue), supervision (dashed orange), data flow (gray)
-- **Team grouping** — agents with a Team/Group column are enclosed in labeled visual containers with agent counts
-- **Selected agent highlighting** — subtle white border + glow when navigating with Tab or clicking
-- Click any agent to open a resizable detail panel with role, model, script, connections, and instructions
+### Interactive Agent Workflow Graph
+- Hierarchical Dagre layout — orchestrators above, pipeline flows left-to-right
+- Color-coded nodes by model family (10 families: Claude, GPT, Gemini, Llama, Mistral, and more)
+- Three edge types: pipeline flow (blue), supervision (orange), data flow (gray)
+- **Team grouping** — visual containers with labels and agent counts
+- **Workflow pattern detection** — identifies Sequential, Split & Merge, Operator, Agent Teams, and Headless patterns with confidence scores
+- **Selected agent highlighting** — subtle glow when navigating with Tab or clicking
+- Resizable detail panel with role, model, script, connections, instructions, health, and git info
 - **Draw manual edges** — drag between nodes to add missing connections
-- **Keyboard shortcuts** — `Esc` (close panel), `Tab` (cycle agents), `/` (search), `M` (monitor), `A` (archived)
 - **Agent notes** — annotate any agent with persisted notes
-- Search and filter agents in real-time
-
-### Workflow Pattern Detection
-Lattice auto-detects the 5 agentic workflow patterns and displays a clickable badge with confidence score:
-
-| Pattern | Icon | How it's detected |
-|---------|------|-------------------|
-| **Sequential** | → | Linear chain — each agent has ≤1 in-edge and ≤1 out-edge |
-| **Split & Merge** | ⟨⟩ | Hub node with 2+ fan-out or fan-in edges |
-| **Operator** | ∥ | Multiple isolated groups with no cross-connections |
-| **Agent Teams** | ⬡ | High edge density — mesh of interconnected agents |
-| **Headless** | ⚡ | Agents with schedule/cron fields, autonomous execution |
-
-Click the pattern badge to see per-team breakdown (e.g., "Dev: Sequential, Growth: Sequential").
+- **Keyboard shortcuts** — `Esc` (close panel), `Tab` (cycle agents), `/` (search), `M` (monitor), `A` (archived)
+- **Dark/Light theme** — toggle with sun/moon button, preference persisted
 
 ### Bidirectional Editing
-- **Edit agent instructions** — click Edit on any agent's source file, modify in-place, preview diff before writing
-- **Toggle agent status** — switch between active/paused/archived from the dashboard, writes back to source file
-- **Diff preview modal** — every file write shows a before/after diff for review before confirming
-- **Auto-snapshot** — a snapshot is saved automatically before every file write (safety net)
-- **Mark as Resolved** — manually override failed/running pipeline status after intervention, with undo
+- **Edit agent instructions** — modify in-place from the dashboard, preview diff before writing back to file
+- **Toggle agent status** — switch between active/paused/archived, writes to source file
+- **Diff preview modal** — every file write shows before/after comparison
+- **Auto-snapshot** — saved automatically before every write (safety net)
+- **Mark as Resolved** — override failed/running pipeline status after manual intervention, with undo
 
-### Live Monitoring
-- Polls pipeline logs for real-time agent status
-- Pulsing glow on running agents, green/red indicators for success/failure
-- Timeline bar with progress, duration tracking, and streaming log viewer
-- **Configurable log paths** — gear icon lets you set custom log directory and file pattern
-- **Auto-discover** — scans for common log directories (`logs/`, `output/`, `runs/`) including nested subdirectories
-- Works out of the box if your project writes structured logs to `logs/`
+### Live Agent Monitoring
+- Real-time status polling with pulsing node animations
+- Progress tracking, duration per agent, streaming log viewer
+- **Resizable timeline** — drag to expand or shrink the log panel
+- **Configurable log paths** — gear icon for custom directory and file pattern
+- **Auto-discover** — scans for `logs/`, `output/`, `runs/` including nested subdirectories
+- Works out of the box if your project writes structured logs
+
+### Agent Health & Git Integration
+- **Health dots** — green (healthy), amber (stale 30+ days), red (script missing) on every node
+- **Git info** — "Changed 2 hours ago by @han — Fix sourcing timeout" per agent
+- Detailed health and git data in the agent detail panel
+
+### Agent Cost Tracking
+- Estimated cost per agent based on model rates and runtime duration
+- Per-agent breakdown sorted by highest cost
+- Total pipeline cost estimate
+- Identify expensive agents that need optimization
 
 ### Auto-Sync
-- File watcher polls every 5 seconds for changes in your project
-- When `.md`, `.py`, or `.yaml` files change, the graph auto-rescans
-- Green "sync" indicator in the header when active
+- File watcher polls every 5 seconds for changes
+- Graph auto-rescans when `.md`, `.py`, or `.yaml` files change
+- Green "sync" indicator in the header
 - No manual re-scan needed after editing files
 
-### Agent Health
-- Green/amber/red health dots on every agent node
-- Script existence check — does the file actually exist?
-- Staleness detection — warns if a script hasn't been modified in 30+ days
-- Detailed health info in the agent detail panel
-
-### Git Integration
-- Shows last commit info per agent — who changed it, when, what commit message
-- Automatic detection for git repositories
-- "Changed 2 hours ago by @han — Fix sourcing timeout"
-
-### Cost Tracking
-- Estimated run cost per agent based on model rates and runtime duration
-- Cost panel in bottom-right shows per-agent breakdown
-- Total pipeline cost estimate
-- Works with live monitoring data
-
-### Export
-- **JSON** — Full project data (agents, edges, metadata) for programmatic use
-- **Mermaid** — Diagram syntax that renders in GitHub, Notion, mermaid.live
-- **PNG** — High-res screenshot of the current viewport
-- **SVG** — Vector image for docs, presentations, print
+### Export & Documentation
+- **JSON** — Full project data for programmatic use
+- **Mermaid** — Diagram syntax for GitHub, Notion, mermaid.live
+- **Markdown Table** — Agent list for pasting into docs, Slack, issues
+- **PNG / SVG** — High-resolution images for presentations
 - **Update README** — One click to inject a Mermaid diagram into your project's README.md
 
-### Snapshot Diff
-- Save snapshots of your agent architecture at any point
-- Compare current state against any saved snapshot
-- Visual diff badges on nodes: NEW (green), MOD (amber), DEL (red)
-- Summary panel shows added/removed/changed agents and edges
+### Architecture Snapshots & Diff
+- Save architecture snapshots at any point
+- Compare snapshots with visual diff badges: NEW (green), MOD (amber), DEL (red)
+- Track how your agent architecture evolves over time
 - Snapshots persist across sessions (capped at 20)
 
-### Persistence
-- Projects are saved to localStorage — refresh the page, your graph is still there
-- "Continue with [project]" quick-load on the landing page
-- UI state (archived toggle, paused agents, monitoring, notes, manual edges) persists across sessions
-
-### Error Recovery
-- Each parser is individually wrapped — one malformed file won't crash the whole scan
-- Parse warnings shown as a dismissible banner with detailed warning count
-- Graceful degradation: partial results are always returned
-
-### CLI
-- `npx lattice-agents` — zero-install local server
-- `npx lattice-agents ./my-project` — auto-scan a folder on startup
-- `npx lattice-agents -p 4000` — custom port
-- Standalone build with automatic browser open
-- Port-in-use detection with helpful suggestions
-
-### Security (Local-First)
-- No data leaves your machine — no external APIs, no telemetry, no AI models
-- Server binds to `127.0.0.1` only — no network exposure
-- Origin header validation on all write API endpoints (CSRF protection)
-- Symlink validation prevents path traversal
-- Sensitive directory blocking (`.ssh`, `.aws`, `.config`, system dirs, docs dirs)
+### Security & Privacy
+- **100% local** — no external API calls, no telemetry, no cloud dependencies, no AI models
+- Server binds to `127.0.0.1` only
+- CSRF protection on all write endpoints, symlink validation, path traversal guards
+- Sensitive directory blocking (`.ssh`, `.aws`, `.config`, system dirs)
 - File size limits (1MB for .md, 50KB for .py, 200 files max)
+
+---
+
+## Use Cases
+
+- **AI teams** building multi-agent pipelines who need visibility into agent topology
+- **Solo developers** running CrewAI or LangGraph projects who want a quick architecture overview
+- **Engineering managers** reviewing agent costs and workflow complexity
+- **Open-source maintainers** documenting agent architectures in their READMEs
+- **Security teams** auditing which models and APIs agents are accessing
+
+---
+
+## Lattice vs. Alternatives
+
+| Feature | Lattice | Manual Diagrams | LangSmith | Custom Scripts |
+|---------|---------|----------------|-----------|---------------|
+| Auto-generates from code | Yes | No | Partial | No |
+| Works offline / local-only | Yes | Yes | No | Yes |
+| Multi-framework support | 11 parsers | N/A | LangChain only | Custom |
+| Live monitoring | Yes | No | Yes | Custom |
+| Cost tracking | Yes | No | Yes | No |
+| Bidirectional editing | Yes | N/A | No | No |
+| Free & open source | Yes | Yes | Freemium | Yes |
+| One-command setup | Yes | N/A | No | No |
+
+---
 
 ## Quick Start
 
 ```bash
-# Option 1: npx (zero install)
+# Run directly (recommended)
 npx lattice-agents
 
-# Option 2: Clone and run
+# Scan a specific project
+npx lattice-agents ./my-project
+
+# Custom port
+npx lattice-agents -p 4000
+
+# All options
+npx lattice-agents --help
+```
+
+Or clone and run locally:
+
+```bash
 git clone https://github.com/DahunHan/lattice.git
 cd lattice/HailMary
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and either:
-- **Drag & drop** your project files onto the landing page (.md, .py, .yaml, .json)
-- **Enter a folder path** and click Scan
-
-### CLI (recommended)
-
-```bash
-npx lattice-agents                    # Start dashboard
-npx lattice-agents ./my-project       # Auto-scan a folder
-npx lattice-agents -p 4000            # Custom port
-npx lattice-agents --help             # All options
-```
-
 ### Try the Example
 
-Lattice ships with a sample harness in `examples/sample-harness/`. Scan that folder to see a multi-agent pipeline with orchestrator supervision, pipeline phases, and log-based monitoring.
+Scan `examples/sample-harness/` to see a multi-agent pipeline with orchestrator supervision, pipeline phases, and log-based monitoring.
 
-You can also scan Lattice's own folder — it's built by a 10-agent harness and visualizes itself.
+Scan Lattice's own folder to see a 10-agent system visualized with team grouping and workflow patterns.
+
+---
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 16 (App Router) |
-| Graph | React Flow (@xyflow/react) |
-| Layout | Dagre (@dagrejs/dagre) |
-| State | Zustand (with persist middleware) |
-| Animation | Framer Motion |
-| Styling | Tailwind CSS v4 |
-| Language | TypeScript (strict mode) |
-| Testing | Vitest (88 tests, 5 suites) |
+Built with Next.js 16, React Flow, Dagre, Zustand, Framer Motion, Tailwind CSS v4, and TypeScript. 88 tests via Vitest.
 
-## Project Structure
+<details>
+<summary>Project Structure</summary>
 
 ```
 src/
-  app/                          # Next.js pages and API routes
+  app/                          # Next.js pages + 9 API routes
     api/scan/                   #   POST: scan a folder for project files
     api/status/                 #   POST: poll pipeline log status
     api/check-changes/          #   POST: detect file changes for auto-sync
@@ -220,70 +215,30 @@ src/
     api/write-agent/            #   GET/POST: read and write agent source files
     graph/                      #   Interactive graph visualization page
   components/
-    graph/
+    graph/                      #   FlowCanvas, ExportMenu, ErrorBoundary
       nodes/                    #   AgentNode, OrchestratorNode, GroupNode
       edges/                    #   PipelineEdge, SupervisionEdge, DataFlowEdge
-      FlowCanvas.tsx            #   React Flow wrapper with manual edge support
-      ExportMenu.tsx            #   Export format dropdown menu
-    modals/
-      DiffPreviewModal.tsx      #   Before/after diff preview for file writes
-    panels/                     #   UI overlay panels
-      AgentDetailPanel.tsx      #   Resizable agent detail + editing panel
-      ProjectOverview.tsx       #   Project stats and controls
-      Legend.tsx                #   Draggable color/edge legend
-      LiveTimeline.tsx          #   Pipeline timeline and log viewer
-      MonitoringToggle.tsx      #   Live monitoring on/off toggle
-      LogSettings.tsx           #   Configurable log path settings
-      SnapshotPanel.tsx         #   Snapshot save/compare/diff UI
-      CostPanel.tsx             #   Per-agent cost estimation panel
+    modals/                     #   DiffPreviewModal
+    panels/                     #   AgentDetail, ProjectOverview, Legend, LiveTimeline,
+                                #   MonitoringToggle, LogSettings, SnapshotPanel, CostPanel, PatternBadge
   lib/
-    parser/                     # 11 parsers + orchestrator
-      agentMapParser.ts         #   CSV and markdown table parsing
-      architectureParser.ts     #   Pipeline phases and edge detection
-      claudeAgentsParser.ts     #   .claude/agents/*.md with frontmatter
-      claudeParser.ts           #   CLAUDE.md metadata extraction
-      skillParser.ts            #   SKILL.md instruction parsing
-      crewaiParser.ts           #   CrewAI agents.yaml, tasks.yaml, @task decorators
-      langgraphParser.ts        #   LangGraph StateGraph nodes, edges, conditional routing
-      autogenParser.ts          #   AutoGen agents, GroupChat, Swarm
-      openaiAgentsParser.ts     #   OpenAI Agents SDK definitions and handoffs
-      heuristicParser.ts        #   Fallback: bold names, arrow patterns, verbal cues
-      markdownUtils.ts          #   Shared: frontmatter, table, CSV utilities
-      parserUtils.ts            #   Shared: slugify, model/role classifiers
-      index.ts                  #   Orchestrator: priority-based parsing with error recovery
-    graph/
-      buildGraph.ts             #   Filters, groups, transforms into React Flow nodes/edges
-      layoutEngine.ts           #   Dagre hierarchical layout computation
-    theme/colors.ts             #   Model-family color palette (10 families)
-    export/exportGraph.ts       #   JSON, Mermaid, PNG, SVG export
-    snapshot/
-      snapshotTypes.ts          #   Snapshot and DiffResult types
-      diffEngine.ts             #   Compare snapshots, produce structured diffs
-    types.ts                    #   Full TypeScript type definitions
-  store/useProjectStore.ts      # Zustand store with localStorage persistence
-  hooks/
-    useAgentStatus.ts           #   Live monitoring polling hook
-    useFileWatcher.ts           #   Auto-sync file change detection hook
+    parser/                     #   11 parsers + orchestrator
+    patterns/                   #   Workflow pattern detector (5 patterns)
+    graph/                      #   Graph builder + Dagre layout engine
+    theme/                      #   Color palette (10 model families)
+    export/                     #   JSON, Mermaid, Markdown, PNG, SVG export
+    snapshot/                   #   Snapshot types + diff engine
+  store/                        #   Zustand with localStorage persistence
+  hooks/                        #   useAgentStatus, useFileWatcher, useKeyboardShortcuts
 scripts/
-  orchestrator.py               # Pipeline runner for agent harnesses
-vscode-extension/               # VS Code extension (side panel webview)
+  orchestrator.py               #   Pipeline runner for agent harnesses
+vscode-extension/               #   VS Code extension (side panel webview)
 ```
 
-## Design
+</details>
 
-Dark theme with glassmorphism. Information density over whitespace — this is a developer tool, not a marketing site.
-
-### Colors
-
-| Element | Color |
-|---------|-------|
-| Background | `#0A0A1B` |
-| Surface | `#12122A` |
-| Border | `#1E1E3A` |
-| Text | `#E0E0F0` |
-| Accent | `#F5A623` (orange) |
-
-### Model Family Colors
+<details>
+<summary>Model Family Colors</summary>
 
 | Model | Color | Hex |
 |-------|-------|-----|
@@ -291,90 +246,68 @@ Dark theme with glassmorphism. Information density over whitespace — this is a
 | Sonnet | Green | `#2ECC71` |
 | Opus | Purple | `#9B59B6` |
 | GPT | Teal | `#1ABC9C` |
-| o-series (o1/o3/o4) | Cyan | `#00BCD4` |
+| o-series | Cyan | `#00BCD4` |
 | Gemini | Yellow | `#F1C40F` |
 | Llama | Orange | `#E67E22` |
 | Mistral | Red | `#E74C3C` |
 | Deepseek | Blue | `#3498DB` |
 | Python/No LLM | Gray | `#7F8C8D` |
 
-## Roadmap
+</details>
 
-### Phase 2: From Map to Dashboard — COMPLETE
-- [x] Framework plugins — CrewAI, LangGraph, AutoGen, OpenAI Agents SDK
-- [x] Snapshot diff — save snapshots, compare, visual diff badges on nodes
-- [x] Export — PNG, SVG, JSON, Mermaid diagram
-- [x] CLI distribution — `npx lattice-agents` with auto-scan, standalone build
-- [x] Manual edges and agent notes — draw missing connections, annotate agents
-- [x] Agent health check — script existence, staleness detection
-- [x] Git integration — last commit info per agent
-- [x] Auto-update README — inject Mermaid diagram into project README.md
-- [x] File watcher — polling-based auto-sync when project files change
-
-### Phase 3: Agent IDE Companion — MOSTLY COMPLETE
-- [x] Bidirectional editing — edit instructions and toggle status from dashboard, with diff preview
-- [x] Auto-sync — file watcher auto-rescans when project files change
-- [x] Cost tracking — estimated cost per agent based on model rates and runtime
-- [x] VS Code extension — open agent dashboard as a side panel while you code
-- [x] Team grouping — visual containers with labels for agent teams
-- [x] Expanded model support — 10 model families with distinct colors
-- [ ] Execution replay — record and step through full pipeline runs
-- [ ] Tauri desktop app — native experience with system tray
+---
 
 ## VS Code Extension
 
 Lattice includes a VS Code extension that opens the dashboard as a side panel.
 
 ```bash
-cd vscode-extension
-npm install
-npm run build
+cd vscode-extension && npm install && npm run build
 ```
 
-Then in VS Code: `Ctrl+Shift+P` → "Lattice: Scan Current Workspace" — opens the graph next to your code.
+Then: `Ctrl+Shift+P` → "Lattice: Scan Current Workspace"
 
-## Built With Two Harnesses
+---
+
+## Built With Two Agent Harnesses
 
 Lattice itself is built and maintained by a 10-agent system — two teams working in sequence.
 
-### Dev Harness (builds the product)
+**Dev Harness** — Architect → Frontend Dev → (Design Reviewer + Code Reviewer) → QA Tester
 
-| Agent | Role |
-|-------|------|
-| Architect | Component structure, data models, API design |
-| Frontend Dev | React components, styling, animations |
-| Design Reviewer | Visual quality gate (>= 7/10 to ship) |
-| Code Reviewer | TypeScript correctness, performance, security |
-| QA Tester | Parser validation, edge cases, cross-reference |
-
-Workflow: Architect → Frontend Dev → (Design Reviewer + Code Reviewer in parallel) → QA Tester
-
-### Growth Harness (grows the project)
-
-| Agent | Role |
-|-------|------|
-| Dogfood Tester | Tests Lattice against real open source agent projects, reports bugs |
-| Docs Writer | Maintains README, guides, changelogs, onboarding content |
-| Content Creator | Writes launch posts, Twitter threads, Reddit posts |
-| Community Manager | Triages GitHub issues, manages PRs, tracks community health |
-| Growth Tracker | Monitors npm downloads, GitHub stars, generates weekly growth reports |
-
-Workflow: Dogfood Tester → (Docs Writer + Community Manager in parallel) → Content Creator → Growth Tracker
+**Growth Harness** — Dogfood Tester → (Docs Writer + Community Manager) → Content Creator → Growth Tracker
 
 Run both teams: `python scripts/orchestrator.py --team all`
 
-Scan Lattice's own folder to see both harnesses visualized with team grouping.
+---
 
-## License
+## Roadmap
 
-MIT
+- [x] 11 framework parsers (Claude, CrewAI, LangGraph, AutoGen, OpenAI Agents)
+- [x] Bidirectional editing with diff preview
+- [x] Live monitoring with configurable log paths
+- [x] Cost tracking, health checks, git integration
+- [x] Export (JSON, Mermaid, Markdown, PNG, SVG, README injection)
+- [x] Workflow pattern detection (5 patterns)
+- [x] Team grouping, keyboard shortcuts, dark/light theme
+- [x] VS Code extension, CLI distribution
+- [ ] Execution replay — record and step through full pipeline runs
+- [ ] Tauri desktop app — native experience with system tray
+
+---
 
 ## Contributing
 
-Lattice is open source and welcomes contributions. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and coding standards.
+Lattice is open source and welcomes contributions. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions.
 
-High-impact areas right now:
-- Additional framework parsers
-- Execution replay
-- Parser accuracy improvements
-- UI polish and accessibility
+High-impact areas: execution replay, parser accuracy, new framework parsers, UI accessibility.
+
+## License
+
+MIT — use it however you want.
+
+---
+
+**Lattice** is an open-source AI agent visualization and monitoring dashboard. Built for teams running multi-agent AI workflows with CrewAI, LangGraph, AutoGen, OpenAI Agents SDK, and more.
+
+[GitHub](https://github.com/DahunHan/lattice) · [npm](https://www.npmjs.com/package/lattice-agents) · [Report Bug](https://github.com/DahunHan/lattice/issues) · [Request Feature](https://github.com/DahunHan/lattice/issues)

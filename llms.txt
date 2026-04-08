@@ -1,0 +1,25 @@
+# Lattice
+
+> Open-source AI agent visualization dashboard
+
+Lattice automatically scans project files and generates interactive graphs of multi-agent AI workflows. Supports CrewAI, LangGraph, AutoGen, OpenAI Agents SDK, Claude Code, and custom setups. 11 parsers, no AI models used — pure regex-based scanning.
+
+## Quick Start
+npx lattice-agents ./your-project
+
+## Key Features
+- Interactive agent workflow graph with color-coded model families
+- Workflow pattern detection (Sequential, Split & Merge, Operator, Agent Teams, Headless)
+- Live agent monitoring with real-time status and log streaming
+- Bidirectional editing — modify agent instructions from the dashboard with diff preview
+- Cost tracking per agent based on model rates and runtime
+- Agent health checks and git integration
+- Export to PNG, SVG, Mermaid, JSON, Markdown table
+- Team grouping with visual containers
+- Auto-sync file watcher
+- Dark/light theme, keyboard shortcuts
+- 100% local — no API keys, no telemetry, no cloud
+
+## Links
+- GitHub: https://github.com/DahunHan/lattice
+- npm: https://www.npmjs.com/package/lattice-agents
