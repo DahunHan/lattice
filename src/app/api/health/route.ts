@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const results: Record<string, AgentHealth> = {};
 
     for (const { agentId, scriptPath } of scripts) {
-      const fullPath = join(basePath, scriptPath);
+      const fullPath = resolve(basePath, scriptPath);
       // Prevent path traversal
       if (!fullPath.startsWith(basePath)) {
         results[agentId] = { scriptExists: false, scriptLastModified: null, scriptSize: null, staleDays: null };

@@ -13,6 +13,8 @@ const IGNORE_DIRS = new Set([
   // Documentation directories — never contain agent definitions
   'docs', 'doc', 'documentation', 'wiki', 'guides', 'tutorials',
   'examples/docs', 'site',
+  // Scripts and config — not agent definitions
+  'scripts',
 ]);
 
 const MAX_DEPTH = 6;

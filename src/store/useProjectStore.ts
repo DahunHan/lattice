@@ -110,7 +110,7 @@ export const useProjectStore = create<ProjectStore>()(
             id: crypto.randomUUID(),
             timestamp: new Date().toISOString(),
             label: label ?? `Snapshot ${s.snapshots.length + 1}`,
-            projectData: structuredClone({ ...projectWithoutRaw, rawFiles: [] }) as ProjectData,
+            projectData: JSON.parse(JSON.stringify({ ...projectWithoutRaw, rawFiles: [] })) as ProjectData,
           };
           // Cap at 20 snapshots, remove oldest if needed
           const updated = [...s.snapshots, snapshot];

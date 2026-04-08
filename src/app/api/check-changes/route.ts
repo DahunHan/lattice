@@ -42,6 +42,15 @@ async function collectMtimes(
 
 export async function POST(req: NextRequest) {
   try {
+    // CSRF protection
+    const origin = req.headers.get('origin');
+    if (origin) {
+      const originUrl = new URL(origin);
+      if (originUrl.hostname !== 'localhost' && originUrl.hostname !== '127.0.0.1') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
     const body = await req.json();
     const projectPath: string = body.path;
 

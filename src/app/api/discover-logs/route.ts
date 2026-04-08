@@ -28,6 +28,16 @@ interface DiscoveredLog {
 
 export async function POST(req: NextRequest) {
   try {
+    // CSRF protection
+    const origin = req.headers.get('origin');
+    if (!origin) {
+      return NextResponse.json({ error: 'Origin header required' }, { status: 403 });
+    }
+    const originUrl = new URL(origin);
+    if (originUrl.hostname !== 'localhost' && originUrl.hostname !== '127.0.0.1') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const body = await req.json();
     const projectPath: string = body.path;
 
@@ -36,6 +46,16 @@ export async function POST(req: NextRequest) {
     }
 
     const basePath = resolve(projectPath);
+
+    // Block sensitive system directories
+    const BLOCKED = ['/etc', '/var', '/proc', '/sys', '/root', '/boot',
+      'C:\\Windows', 'C:\\Program Files', 'C:\\Program Files (x86)', 'C:\\ProgramData'];
+    for (const blocked of BLOCKED) {
+      if (basePath.toLowerCase().startsWith(blocked.toLowerCase())) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      }
+    }
+
     if (!existsSync(basePath)) {
       return NextResponse.json({ error: 'Path not found' }, { status: 404 });
     }

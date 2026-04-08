@@ -31,13 +31,15 @@ export default function GraphPage() {
   const pausedAgentIds = useProjectStore((s) => s.pausedAgentIds);
   const searchQuery = useProjectStore((s) => s.searchQuery);
   const monitoringEnabled = useProjectStore((s) => s.monitoringEnabled);
-  const setPipelineStatus = useProjectStore((s) => s.setPipelineStatus);
   const hasHydrated = useProjectStore((s) => s._hasHydrated);
   const diffResult = useProjectStore((s) => s.diffResult);
   const manualEdges = useProjectStore((s) => s.manualEdges);
-  const addManualEdge = useProjectStore((s) => s.addManualEdge);
   const agentNotes = useProjectStore((s) => s.agentNotes);
   const resolvedAgentIds = useProjectStore((s) => s.resolvedAgentIds);
+
+  // Actions (stable refs — grouped to reduce selector count)
+  const setPipelineStatus = useProjectStore((s) => s.setPipelineStatus);
+  const addManualEdge = useProjectStore((s) => s.addManualEdge);
   const clearResolved = useProjectStore((s) => s.clearResolved);
   const setProject = useProjectStore((s) => s.setProject);
 

@@ -2,7 +2,7 @@ import type { ProjectData, Agent, AgentEdge, ParsedFile, ParseWarning } from '..
 import { isAgentMap, parseAgentMap } from './agentMapParser';
 import { isArchitectureDoc, parsePipeline, parseEdges } from './architectureParser';
 import { isClaudeMd, parseClaudeMd } from './claudeParser';
-import { isClaudeAgentFile, parseClaudeAgentFile, parseOrchestrationTable } from './claudeAgentsParser';
+import { isClaudeAgentFile, parseClaudeAgentFile, parseOrchestrationTable, assignGroupsFromClaudeMd } from './claudeAgentsParser';
 import { isSkillFile, parseSkillFile, enrichAgentsWithSkills } from './skillParser';
 import { isCrewAIYaml, isCrewAIPython, parseCrewAIAgentsYaml, parseCrewAITasksYaml, parseCrewAIPython } from './crewaiParser';
 import { isLangGraph, parseLangGraph } from './langgraphParser';
@@ -143,11 +143,12 @@ export function parseProject(files: RawFile[]): ProjectData {
     warnings.push({ file: 'architecture', parser: 'edges', message: String(e) });
   }
 
-  // Parse orchestration tables from CLAUDE.md files
+  // Parse orchestration tables and assign groups from CLAUDE.md files
   for (const claudeFile of claudeMdFiles) {
     try {
       const orchEdges = parseOrchestrationTable(claudeFile.content, agents);
       edges = mergeEdges(edges, orchEdges);
+      assignGroupsFromClaudeMd(claudeFile.content, agents);
     } catch (e) {
       warnings.push({ file: claudeFile.name, parser: 'orchestration', message: String(e) });
     }

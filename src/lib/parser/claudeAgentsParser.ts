@@ -88,6 +88,36 @@ export function parseClaudeAgentFile(content: string, path: string): Agent {
  *   | Agent | Role |
  *   | architect | Component structure... |
  */
+/** Extract group names from CLAUDE.md section headings and assign to agents */
+export function assignGroupsFromClaudeMd(claudeMdContent: string, agents: Agent[]): void {
+  const sections = extractSections(claudeMdContent);
+  const nameToAgent = new Map<string, Agent>();
+  for (const a of agents) {
+    nameToAgent.set(a.id, a);
+    nameToAgent.set(a.name.toLowerCase(), a);
+    nameToAgent.set(a.name.toLowerCase().replace(/[_-]/g, ''), a);
+  }
+
+  for (const section of sections) {
+    // Look for sections like "### Dev Harness", "### Growth Harness (open source ops)"
+    const headingMatch = section.heading.match(/^(.+?)(?:\s*(?:harness|team|agents?))\b/i);
+    if (!headingMatch) continue;
+
+    const groupName = headingMatch[1].replace(/#+\s*/, '').trim();
+    if (!groupName || groupName.length > 30) continue;
+
+    // Find agent names referenced in this section (table rows or bold names)
+    const tableRows = section.body.match(/\|\s*(\w[\w\s-]+?)\s*\|/g) ?? [];
+    for (const row of tableRows) {
+      const name = row.replace(/\|/g, '').trim().toLowerCase().replace(/[_-\s]/g, '');
+      const agent = nameToAgent.get(name);
+      if (agent && !agent.group) {
+        agent.group = groupName;
+      }
+    }
+  }
+}
+
 export function parseOrchestrationTable(claudeMdContent: string, agents: Agent[]): AgentEdge[] {
   const edges: AgentEdge[] = [];
   const sections = extractSections(claudeMdContent);

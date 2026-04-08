@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     const basePath = resolve(projectPath);
-    const fullPath = join(basePath, filePath);
+    const fullPath = resolve(basePath, filePath);
 
     // Path traversal protection
     if (!fullPath.startsWith(basePath)) {
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
     }
 
     const basePath = resolve(projectPath);
-    const fullPath = join(basePath, filePath);
+    const fullPath = resolve(basePath, filePath);
 
     if (!fullPath.startsWith(basePath)) {
       return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
