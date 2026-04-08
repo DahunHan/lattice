@@ -17,6 +17,8 @@ import { ExportMenu } from "@/components/graph/ExportMenu";
 import { SnapshotPanel } from "@/components/panels/SnapshotPanel";
 import { LogSettings } from "@/components/panels/LogSettings";
 import { CostPanel } from "@/components/panels/CostPanel";
+import { PatternBadge } from "@/components/panels/PatternBadge";
+import { detectPattern, detectGroupPatterns } from "@/lib/patterns/patternDetector";
 import { useFileWatcher } from "@/hooks/useFileWatcher";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { parseProject } from "@/lib/parser";
@@ -75,6 +77,17 @@ export default function GraphPage() {
 
   // Keyboard shortcuts
   useKeyboardShortcuts();
+
+  // Pattern detection
+  const patternInfo = useMemo(() => {
+    if (!project) return null;
+    return detectPattern(project.agents, project.edges);
+  }, [project]);
+
+  const groupPatterns = useMemo(() => {
+    if (!project) return [];
+    return detectGroupPatterns(project.agents, project.edges);
+  }, [project]);
 
   const logDir = useProjectStore((s) => s.logDir);
   const logPattern = useProjectStore((s) => s.logPattern);
@@ -285,6 +298,7 @@ export default function GraphPage() {
 
         {/* Overlay panels */}
         <ProjectOverview />
+        {patternInfo && <PatternBadge overall={patternInfo} groups={groupPatterns} />}
         <Legend />
         <AgentDetailPanel />
         <SnapshotPanel />
