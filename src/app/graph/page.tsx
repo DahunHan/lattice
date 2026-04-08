@@ -7,6 +7,7 @@ import { useProjectStore } from "@/store/useProjectStore";
 import { buildFlowGraph } from "@/lib/graph/buildGraph";
 import { useAgentStatus } from "@/hooks/useAgentStatus";
 import { FlowCanvas } from "@/components/graph/FlowCanvas";
+import { ErrorBoundary } from "@/components/graph/ErrorBoundary";
 import { AgentDetailPanel } from "@/components/panels/AgentDetailPanel";
 import { ProjectOverview } from "@/components/panels/ProjectOverview";
 import { Legend } from "@/components/panels/Legend";
@@ -17,6 +18,7 @@ import { SnapshotPanel } from "@/components/panels/SnapshotPanel";
 import { LogSettings } from "@/components/panels/LogSettings";
 import { CostPanel } from "@/components/panels/CostPanel";
 import { useFileWatcher } from "@/hooks/useFileWatcher";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { parseProject } from "@/lib/parser";
 
 export default function GraphPage() {
@@ -70,6 +72,9 @@ export default function GraphPage() {
 
   // If project exists (from setProject), we don't need to wait for hydration
   const ready = !!project;
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts();
 
   const logDir = useProjectStore((s) => s.logDir);
   const logPattern = useProjectStore((s) => s.logPattern);
@@ -238,6 +243,8 @@ export default function GraphPage() {
         </div>
         <div className="flex items-center gap-3">
           {/* Export menu */}
+          {/* Theme toggle */}
+          <ThemeToggle />
           <ExportMenu project={project} graphElement={graphElementRef.current} />
           {/* Live monitoring toggle + settings */}
           {projectPath && (
@@ -270,9 +277,11 @@ export default function GraphPage() {
 
       {/* Main canvas area */}
       <div className="absolute inset-0 pt-12" style={{ paddingTop: warningCount > 0 && !warningDismissed ? '80px' : '48px', paddingBottom: monitoringEnabled && status ? '40px' : '0' }}>
-        <ReactFlowProvider>
-          <FlowCanvas initialNodes={nodes} initialEdges={edges} onContainerRef={handleContainerRef} onManualConnect={handleManualConnect} />
-        </ReactFlowProvider>
+        <ErrorBoundary>
+          <ReactFlowProvider>
+            <FlowCanvas initialNodes={nodes} initialEdges={edges} onContainerRef={handleContainerRef} onManualConnect={handleManualConnect} />
+          </ReactFlowProvider>
+        </ErrorBoundary>
 
         {/* Overlay panels */}
         <ProjectOverview />
@@ -297,6 +306,25 @@ const LOADING_STEPS = [
   { text: 'Computing layout', sub: 'Dagre hierarchical positioning' },
   { text: 'Rendering graph', sub: 'Almost there...' },
 ];
+
+function ThemeToggle() {
+  const theme = useProjectStore((s) => s.theme);
+  const toggleTheme = useProjectStore((s) => s.toggleTheme);
+
+  return (
+    <button
+      onClick={toggleTheme}
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-medium bg-[#1E1E3A] text-[#7777A0] border border-[#1E1E3A] hover:border-[#2E2E52] hover:text-[#9999BB] transition-all"
+      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+    >
+      {theme === 'dark' ? (
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      ) : (
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      )}
+    </button>
+  );
+}
 
 function LoadingScreen(): ReactElement {
   const [step, setStep] = useState(0);

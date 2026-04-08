@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-:root {
+:root, [data-theme="dark"] {
   --hm-bg: #0A0A1B;
   --hm-surface: #12122A;
   --hm-surface-alt: #161632;
@@ -11,12 +11,37 @@
   --hm-accent: #F5A623;
   --hm-accent-dim: rgba(245, 166, 35, 0.15);
   --hm-text-muted: #7777A0;
+  --hm-glass: rgba(18, 18, 42, 0.7);
+  --hm-glass-strong: rgba(18, 18, 42, 0.85);
+  --hm-glass-border: rgba(255, 255, 255, 0.06);
 
   --hm-haiku: #4A9EE0;
   --hm-sonnet: #2ECC71;
   --hm-opus: #9B59B6;
   --hm-gemini: #F1C40F;
   --hm-python: #7F8C8D;
+}
+
+[data-theme="light"] {
+  --hm-bg: #F5F5FA;
+  --hm-surface: #FFFFFF;
+  --hm-surface-alt: #F0F0F8;
+  --hm-border: #D8D8E8;
+  --hm-border-light: #E8E8F0;
+  --hm-text: #1A1A2E;
+  --hm-text-dim: #6666AA;
+  --hm-accent: #E8941E;
+  --hm-accent-dim: rgba(232, 148, 30, 0.12);
+  --hm-text-muted: #8888AA;
+  --hm-glass: rgba(255, 255, 255, 0.85);
+  --hm-glass-strong: rgba(255, 255, 255, 0.95);
+  --hm-glass-border: rgba(0, 0, 0, 0.08);
+
+  --hm-haiku: #2E7BBF;
+  --hm-sonnet: #1EA85A;
+  --hm-opus: #7B3FA0;
+  --hm-gemini: #C9A00E;
+  --hm-python: #5A6568;
 }
 
 @theme inline {
@@ -97,17 +122,17 @@ body {
 
 /* Glass morphism utility */
 .glass {
-  background: rgba(18, 18, 42, 0.7);
+  background: var(--hm-glass);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--hm-glass-border);
 }
 
 .glass-strong {
-  background: rgba(18, 18, 42, 0.85);
+  background: var(--hm-glass-strong);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--hm-glass-border);
 }
 
 /* Glow effect */

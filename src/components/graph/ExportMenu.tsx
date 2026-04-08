@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { ProjectData } from "@/lib/types";
-import { exportJSON, exportMermaid, exportPNG, exportSVG, generateMermaidContent } from "@/lib/export/exportGraph";
+import { exportJSON, exportMermaid, exportPNG, exportSVG, exportMarkdownTable, generateMermaidContent } from "@/lib/export/exportGraph";
 import { useProjectStore } from "@/store/useProjectStore";
 
 interface ExportMenuProps {
@@ -13,6 +13,7 @@ interface ExportMenuProps {
 const EXPORT_OPTIONS = [
   { id: 'json', label: 'JSON', icon: '{ }', desc: 'Full project data' },
   { id: 'mermaid', label: 'Mermaid', icon: '◇', desc: 'Diagram syntax' },
+  { id: 'table', label: 'Table', icon: '▤', desc: 'Markdown table' },
   { id: 'png', label: 'PNG', icon: '▣', desc: 'Current viewport' },
   { id: 'svg', label: 'SVG', icon: '◈', desc: 'Current viewport' },
   { id: 'readme', label: 'Update README', icon: '▤', desc: 'Inject Mermaid diagram' },
@@ -53,6 +54,9 @@ export function ExportMenu({ project, graphElement }: ExportMenuProps) {
           break;
         case 'mermaid':
           exportMermaid(project, name);
+          break;
+        case 'table':
+          exportMarkdownTable(project, name);
           break;
         case 'png':
           if (graphElement) await exportPNG(graphElement, name);

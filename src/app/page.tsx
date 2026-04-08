@@ -21,7 +21,7 @@ export default function LandingPage() {
   const handleFiles = useCallback(
     async (files: RawFile[]) => {
       if (files.length === 0) {
-        setError("No parseable files found (.md, .py, .yaml, .json)");
+        setError("No parseable files found. Drag & drop .md, .py, .yaml, or .json files — or scan a project folder that contains them.");
         return;
       }
       setIsLoading(true);
@@ -29,7 +29,7 @@ export default function LandingPage() {
       try {
         const project = parseProject(files);
         if (project.agents.length === 0) {
-          setError("No agents detected in the provided files");
+          setError("No agents detected. Lattice looks for: AGENT_MAP.md, .claude/agents/*.md, SKILL.md, agents.yaml (CrewAI), *.py with StateGraph/Agent/GroupChat. Try scanning the examples/sample-harness/ folder first.");
           return;
         }
         setProject(project);

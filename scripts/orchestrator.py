@@ -84,7 +84,7 @@ TEAM_GROWTH = {
             "id": "dogfood_tester",
             "name": "Dogfood Tester",
             "file": "dogfood-tester.md",
-            "task": "Find 3 real agent projects on GitHub, test Lattice against each, report results",
+            "task": "Test Lattice by scanning its own project folder and the examples/sample-harness/ folder. Verify agent counts, edge counts, and group labels are correct. Check for false positives. Report accuracy scores. Do NOT clone external repos — test against local files only.",
             "phase": 1,
         },
         {
@@ -245,7 +245,9 @@ Be thorough but concise. Complete the task and report what you did."""
             ["claude", "--print", "-p", prompt],
             capture_output=True,
             text=True,
-            timeout=600,  # 10 minute timeout per agent
+            encoding='utf-8',
+            errors='replace',
+            timeout=900,  # 15 minute timeout per agent
             cwd=str(PROJECT_ROOT),
         )
 

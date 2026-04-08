@@ -65,7 +65,7 @@ export function buildFlowGraph(
         border: '1px solid rgba(245, 166, 35, 0.08)',
         borderRadius: '16px',
       },
-      data: { label: groupName },
+      data: { label: `${groupName} (${group.agents.length})` },
     });
   }
 

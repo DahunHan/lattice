@@ -55,6 +55,10 @@ interface ProjectStore {
   unmarkResolved: (agentId: string) => void;
   clearResolved: () => void;
 
+  // Theme
+  theme: 'dark' | 'light';
+  toggleTheme: () => void;
+
   // Hydration tracking
   _hasHydrated: boolean;
 }
@@ -169,6 +173,17 @@ export const useProjectStore = create<ProjectStore>()(
         }),
       clearResolved: () => set({ resolvedAgentIds: new Set() }),
 
+      // Theme
+      theme: 'dark',
+      toggleTheme: () =>
+        set((s) => {
+          const next = s.theme === 'dark' ? 'light' : 'dark';
+          if (typeof document !== 'undefined') {
+            document.documentElement.setAttribute('data-theme', next);
+          }
+          return { theme: next };
+        }),
+
       _hasHydrated: false,
     }),
     {
@@ -197,6 +212,7 @@ export const useProjectStore = create<ProjectStore>()(
         manualEdges: state.manualEdges,
         agentNotes: state.agentNotes,
         resolvedAgentIds: state.resolvedAgentIds,
+        theme: state.theme,
       }),
       version: 3,
       migrate: (persisted, version) => {
@@ -224,8 +240,12 @@ export const useProjectStore = create<ProjectStore>()(
         }
         return state as never;
       },
-      onRehydrateStorage: () => () => {
+      onRehydrateStorage: () => (state) => {
         useProjectStore.setState({ _hasHydrated: true });
+        // Apply persisted theme on load
+        if (state?.theme && typeof document !== 'undefined') {
+          document.documentElement.setAttribute('data-theme', state.theme);
+        }
       },
     }
   )

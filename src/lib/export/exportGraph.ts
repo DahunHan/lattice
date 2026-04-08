@@ -124,6 +124,30 @@ export async function exportSVG(
   link.click();
 }
 
+/** Export agent list as Markdown table */
+export function exportMarkdownTable(project: ProjectData, projectName: string): void {
+  const lines: string[] = [
+    `# ${project.metadata.name} — Agent Overview`,
+    '',
+    '| Agent | Role | Model | Status | Team |',
+    '|-------|------|-------|--------|------|',
+  ];
+
+  for (const agent of project.agents) {
+    const name = agent.name.replace(/_/g, ' ');
+    const role = agent.role.replace(/\|/g, '/').slice(0, 60);
+    const model = agent.modelFamily;
+    const status = agent.status;
+    const team = agent.group ?? '—';
+    lines.push(`| ${name} | ${role} | ${model} | ${status} | ${team} |`);
+  }
+
+  lines.push('');
+  lines.push(`*${project.agents.length} agents, ${project.edges.length} connections*`);
+
+  downloadFile(lines.join('\n'), `${slugName(projectName)}-agents-table.md`, 'text/markdown');
+}
+
 function downloadFile(content: string, filename: string, mimeType: string): void {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
