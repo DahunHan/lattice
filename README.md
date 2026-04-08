@@ -6,8 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-88%20passing-brightgreen)]()
 
-<!-- Add a screenshot or GIF of the graph view here -->
-<!-- ![Lattice Dashboard](docs/demo.gif) -->
+![Lattice Dashboard](docs/demo.gif)
 
 ```bash
 npx lattice-agents ./your-project
