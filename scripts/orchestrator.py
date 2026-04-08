@@ -151,7 +151,11 @@ class PipelineLogger:
         line = f"[{self._now()}] [{level}] {message}\n"
         with open(self.log_path, "a", encoding="utf-8") as f:
             f.write(line)
-        print(line.strip())
+        # Use errors='replace' for console output on non-UTF-8 terminals (e.g., Korean Windows cp949)
+        try:
+            print(line.strip())
+        except UnicodeEncodeError:
+            print(line.strip().encode('ascii', errors='replace').decode('ascii'))
 
     def _save_state(self):
         with open(self.state_path, "w", encoding="utf-8") as f:
@@ -257,13 +261,14 @@ Be thorough but concise. Complete the task and report what you did."""
             # Log a summary of what the agent produced
             output = (result.stdout or '').strip()
             if output:
-                summary = output[:200].replace("\n", " ")
+                # Sanitize for safe logging (remove chars that crash non-UTF-8 consoles)
+                summary = output[:200].replace("\n", " ").encode('ascii', errors='replace').decode('ascii')
                 logger.agent_output(agent_id, summary)
             logger.agent_success(agent_id, duration)
             return True
         else:
             stderr = (result.stderr or '').strip()
-            error = stderr[:200] if stderr else f"Exit code {result.returncode}"
+            error = (stderr[:200] if stderr else f"Exit code {result.returncode}").encode('ascii', errors='replace').decode('ascii')
             logger.agent_failed(agent_id, error)
             return False
 
